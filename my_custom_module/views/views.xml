@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de Lista (Tree View) -->
+    <record id="view_my_custom_model_tree" model="ir.ui.view">
+        <name>my_custom.model.tree</name>
+        <model>my_custom.model</model>
+        <arch type="xml">
+            <list string="Modelos Personalizados">
+                <field name="name"/>
+                <field name="description"/>
+                <field name="active"/>
+            </list>
+        </arch>
+    </record>
+
+    <!-- Vista de Formulario (Form View) -->
+    <record id="view_my_custom_model_form" model="ir.ui.view">
+        <name>my_custom.model.form</name>
+        <model>my_custom.model</model>
+        <arch type="xml">
+            <form string="Modelo Personalizado">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </arch>
+    </record>
+
+    <!-- Acción de Ventana (Window Action) -->
+    <record id="action_my_custom_model" model="ir.actions.act_window">
+        <name>Mi Modelo Personalizado</name>
+        <res_model>my_custom.model</res_model>
+        <view_mode>list,form</view_mode>
+        <help type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea el primer registro personalizado.
+            </p>
+        </help>
+    </record>
+
+    <!-- Menús de Acceso -->
+    <menuitem id="menu_my_custom_root" name="Mi Módulo" sequence="10"/>
+    <menuitem id="menu_my_custom_model" name="Registros" parent="menu_my_custom_root" action="action_my_custom_model" sequence="10"/>
+</odoo>
