@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_uom_form_tafel" model="ir.ui.view">
+        <field name="name">uom.uom.form.tafel</field>
+        <field name="model">uom.uom</field>
+        <field name="inherit_id" ref="uom.product_uom_form_view"/>
+        <field name="arch" type="xml">
+            <field name="rounding" position="after">
+                <field name="tafel_uom_code" string="Código HKA (UNeCE)"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

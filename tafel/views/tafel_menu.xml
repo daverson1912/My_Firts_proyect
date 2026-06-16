@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_tafel_check_config" model="ir.actions.server">
+        <field name="name">Abrir Facturación Electrónica</field>
+        <field name="model_id" ref="model_tafel_config"/>
+        <field name="state">code</field>
+        <field name="code">
+config = env['tafel.config'].search([('company_id', '=', env.company.id)], limit=1)
+if not config:
+    action = env.ref('tafel.action_tafel_setup_wizard').read()[0]
+else:
+    action = env.ref('tafel.action_tafel_config').read()[0]
+    action['res_id'] = config.id
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_tafel_root"
+        name="Facturación Electrónica"
+        sequence="100"
+        groups="tafel.group_tafel_user"
+        web_icon="tafel,static/description/icon.png"/>
+
+    <menuitem
+        id="menu_tafel_config"
+        name="Configuración"
+        parent="menu_tafel_root"
+        action="action_tafel_check_config"
+        sequence="10"
+        groups="tafel.group_tafel_manager"/>
+
+    <menuitem
+        id="menu_tafel_transactions"
+        name="Transacciones"
+        parent="menu_tafel_root"
+        action="tafel.action_tafel_fiscal_document_menu"
+        sequence="20"
+        groups="tafel.group_tafel_user"/>
+
+</odoo>

@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ========== VISTA DE FORMULARIO ========== -->
+    
+    <record id="view_account_wh_iva_form" model="ir.ui.view">
+        <field name="name">account.wh.iva.form</field>
+        <field name="model">account.wh.iva</field>
+        <field name="arch" type="xml">
+            <form string="Comprobante de Retención de IVA">
+                <!-- Header con estado -->
+                <header>
+                    <button name="action_process_withholding" 
+                            string="Procesar Retención" 
+                            type="object" 
+                            class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="account.group_account_manager"/>
+                    <button name="action_print_retention" 
+                            string="Imprimir Comprobante" 
+                            type="object" 
+                            invisible="state == 'draft' or type != 'purchase'"
+                            groups="account.group_account_manager"/>
+                    <button name="action_retry_email" 
+                            string="Reintentar Envío" 
+                            type="object" 
+                            class="btn-secondary"
+                            icon="fa-refresh"
+                            invisible="email_state != 'failed'"
+                            groups="account.group_account_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,posted,declared"/>
+                </header>
+                
+                <sheet>
+                    <!-- Título -->
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Número de Comprobante" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <!-- Información principal -->
+                    <group>
+                        <group>
+                            <field name="partner_id" 
+                                   options="{'no_create': True}"/>
+                            <field name="partner_vat" readonly="1"/>
+                            <field name="wh_type" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Información de la factura -->
+                    <group string="Documento Relacionado">
+                        <group>
+                            <field name="move_id" readonly="1"/>
+                            <field name="invoice_number" string="Documento" readonly="1"/>
+                            <field name="supplier_invoice_number" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="invoice_date" string="Fecha Documento" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <!-- Enlace a Retención Original (Solo para NC) -->
+                            <field name="parent_wh_iva_id" invisible="wh_type != 'refund'"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Montos -->
+                    <group string="Montos">
+                        <field name="amount_base" 
+                               widget="monetary" 
+                               options="{'currency_field': 'currency_id'}"/>
+                        <field name="amount_total_ret" 
+                               widget="monetary" 
+                               options="{'currency_field': 'currency_id'}"/>
+                    </group>
+                    
+                    <!-- Información de API -->
+                    <group string="Información de Procesamiento" invisible="state == 'draft'">
+                        <group>
+                            <field name="api_transaction_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Estado de Correo -->
+                    <group string="Estado de Correo Electrónico" invisible="state == 'draft'">
+                        <group>
+                            <field name="email_state" widget="badge"
+                                   decoration-warning="email_state == 'pending'"
+                                   decoration-success="email_state == 'sent'"
+                                   decoration-danger="email_state == 'failed'"
+                                   decoration-muted="email_state == 'skipped'"/>
+                            <field name="last_email_at" invisible="not last_email_at"/>
+                        </group>
+                        <group>
+                            <field name="email_retry_count" invisible="email_retry_count == 0"/>
+                            <field name="last_email_error" invisible="not last_email_error"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Nota informativa para borradores -->
+                    <div class="alert alert-info" role="alert" invisible="state != 'draft'">
+                        <p><strong>ℹ️ Comprobante en Borrador</strong></p>
+                        <p>Este comprobante fue creado automáticamente al confirmar la factura de compra.</p>
+                        <p>Puede procesar su retención haciendo clic en el botón "Procesar Retención".</p>
+                    </div>
+                    
+                </sheet>
+                
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    
+    <!-- ========== VISTA DE LISTA ========== -->
+    
+    <record id="view_account_wh_iva_tree" model="ir.ui.view">
+        <field name="name">account.wh.iva.tree</field>
+        <field name="model">account.wh.iva</field>
+        <field name="arch" type="xml">
+            <list string="Comprobantes de Retención de IVA">
+                <field name="date" string="Fecha"/>
+                <field name="partner_id" string="Proveedor"/>
+                <field name="invoice_number" string="Documento"/>
+                <field name="amount_total_invoice" string="Monto Documento" sum="Total Documentos"/>
+                <field name="amount_taxable_base" string="Base Imponible" sum="Total Base Imponible"/>
+                <field name="amount_exempt" string="Exento" sum="Total Exento"/>
+                <field name="amount_base" string="Base Impuesto" sum="Total Base"/>
+                <field name="amount_total_ret" string="Monto Retenido" sum="Total Retenido"/>
+                <field name="retention_percentage" string="% Retención"/>
+                <field name="email_state" string="Correo" widget="badge" 
+                       decoration-warning="email_state == 'pending'" 
+                       decoration-success="email_state == 'sent'"
+                       decoration-danger="email_state == 'failed'"
+                       optional="show"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state == 'draft'" 
+                       decoration-success="state == 'posted'"/>
+                <field name="company_id" groups="base.group_multi_company" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- ========== VISTA DE BÚSQUEDA ========== -->
+    
+    <record id="view_account_wh_iva_search" model="ir.ui.view">
+        <field name="name">account.wh.iva.search</field>
+        <field name="model">account.wh.iva</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Comprobantes">
+                <!-- Filtros de búsqueda -->
+                <field name="name" string="Número"/>
+                <field name="partner_id" string="Proveedor"/>
+                <field name="invoice_number" string="Factura"/>
+                <field name="api_transaction_id" string="ID Transacción"/>
+                
+                <!-- Filtros predefinidos -->
+                <filter name="draft" 
+                        string="Borradores" 
+                        domain="[('state', '=', 'draft')]"/>
+                <filter name="posted" 
+                        string="Procesados" 
+                        domain="[('state', '=', 'posted')]"/>
+                
+                <separator/>
+                
+                <filter name="this_month" 
+                        string="Este Mes" 
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')), 
+                                 ('date', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+                <filter name="last_month" 
+                        string="Mes Pasado" 
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(months=1, day=1)).strftime('%Y-%m-%d')), 
+                                 ('date', '&lt;=', (context_today() - relativedelta(months=1, day=31)).strftime('%Y-%m-%d'))]"/>
+                
+                <!-- Agrupaciones -->
+                <group expand="0" string="Agrupar Por">
+                    <filter name="group_partner" string="Proveedor" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                    <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
+                </group>
+
+                <!-- Filtros de estado -->
+                <filter name="state_draft" string="Borrador" domain="[('state', '=', 'draft')]"/>
+                <filter name="state_posted" string="Publicado" domain="[('state', '=', 'posted')]"/>
+                <filter name="state_declared" string="Declarado" domain="[('state', '=', 'declared')]"/>
+                <separator/>
+                <filter name="email_pending" 
+                        string="Correo Pendiente" 
+                        domain="[('email_state', '=', 'pending')]"/>
+                <filter name="email_sent" 
+                        string="Correo Enviado" 
+                        domain="[('email_state', '=', 'sent')]"/>
+                <filter name="email_failed" 
+                        string="Correo Fallido" 
+                        domain="[('email_state', '=', 'failed')]"/>
+            </search>
+        </field>
+    </record>
+    
+    <!-- ========== VISTAS DE RESUMEN (SQL VIEW) ========== -->
+
+    <record id="view_account_wh_iva_summary_tree" model="ir.ui.view">
+        <field name="name">account.wh.iva.summary.tree</field>
+        <field name="model">account.wh.iva.summary</field>
+        <field name="arch" type="xml">
+            <list string="Comprobantes de Retención de IVA" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_print_retention" 
+                            string="Imprimir Retención" 
+                            type="object" 
+                            class="oe_highlight"/>
+                </header>
+                <field name="name" string="Retención"/>
+                <field name="date" string="Fecha"/>
+                <field name="partner_id" string="Proveedor"/>
+                <field name="amount_total_invoice" string="Monto Documento" sum="Total Documentos"/>
+                <field name="amount_taxable_base" string="Base Imponible" sum="Total Base Imponible"/>
+                <field name="amount_exempt" string="Exento" sum="Total Exento"/>
+                <field name="amount_base" string="Base Impuesto" sum="Total Base"/>
+                <field name="amount_total_ret" string="Monto Retenido" sum="Total Retenido"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state == 'posted'" 
+                       decoration-info="state == 'declared'"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="company_id" groups="base.group_multi_company" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_account_wh_iva_summary_form" model="ir.ui.view">
+        <field name="name">account.wh.iva.summary.form</field>
+        <field name="model">account.wh.iva.summary</field>
+        <field name="arch" type="xml">
+            <form string="Resumen de Comprobante" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_requeue_email" 
+                            string="Reenviar por Correo" 
+                            type="object" 
+                            class="oe_highlight"
+                            icon="fa-envelope"/>
+                    <button name="action_print_retention" 
+                            string="Imprimir" 
+                            type="object"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Totales del Comprobante">
+                        <group>
+                            <field name="amount_total_invoice" widget="monetary" string="Monto del Documento" options="{'currency_field': 'currency_id'}"/>
+                            <field name="amount_taxable_base" widget="monetary" string="Base Imponible Total" options="{'currency_field': 'currency_id'}"/>
+                            <field name="amount_exempt" widget="monetary" string="Monto Exento Total" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                        <group>
+                            <field name="amount_base" widget="monetary" string="Monto IVA Total" options="{'currency_field': 'currency_id'}"/>
+                            <field name="amount_total_ret" widget="monetary" string="Monto Total Retenido" options="{'currency_field': 'currency_id'}"/>
+                            <field name="amount_total_signed" widget="monetary" string="Monto Neto Total" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="details" string="Documentos Asociados">
+                            <field name="line_ids" readonly="1">
+                                <list>
+                                    <field name="invoice_number" string="Documento"/>
+                                    <field name="supplier_invoice_number" string="Documento Prov."/>
+                                    <field name="invoice_date" string="Fecha Documento"/>
+                                    <field name="amount_total_invoice" string="Monto Documento" sum="Total Documentos"/>
+                                    <field name="amount_taxable_base" string="Base Imponible" sum="Total Base Imponible"/>
+                                    <field name="amount_exempt" string="Exento" sum="Total Exento"/>
+                                    <field name="amount_base" string="Base Impuesto" sum="Total Base"/>
+                                    <field name="amount_total_ret" string="Monto Retenido" sum="Total Retenido"/>
+                                    <field name="retention_percentage" string="% Retención"/>
+                                    <field name="state" widget="badge" 
+                                           decoration-success="state == 'posted'" 
+                                           decoration-info="state == 'declared'"
+                                           decoration-warning="state == 'draft'"
+                                           decoration-danger="state == 'cancel'"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_account_wh_iva_summary_search" model="ir.ui.view">
+        <field name="name">account.wh.iva.summary.search</field>
+        <field name="model">account.wh.iva.summary</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Comprobantes">
+                <field name="name" string="Número"/>
+                <field name="partner_id" string="Proveedor"/>
+                
+                <separator/>
+                <filter name="this_month" 
+                        string="Este Mes" 
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')), 
+                                 ('date', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+                
+                <group expand="0" string="Agrupar Por">
+                    <filter name="group_partner" string="Proveedor" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_date" string="Mes" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ========== ACCIÓN DE VENTANA ========== -->
+    
+    <record id="action_account_wh_iva_summary_grouped" model="ir.actions.act_window">
+        <field name="name">Comprobantes de Retención IVA</field>
+        <field name="res_model">account.wh.iva.summary</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_account_wh_iva_summary_tree"/>
+        <field name="search_view_id" ref="view_account_wh_iva_summary_search"/>
+        <field name="domain">[('type', '=', 'purchase')]</field>
+        <field name="context">{
+            'search_default_this_month': 1,
+            'default_type': 'purchase',
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay comprobantes de retención procesados
+            </p>
+            <p>
+                Use el "Unificador de Retenciones" para procesar registros en borrador 
+                y asignarles un número de comprobante.
+            </p>
+        </field>
+    </record>
+    
+</odoo>

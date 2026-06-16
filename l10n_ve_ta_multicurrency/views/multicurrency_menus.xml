@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Action to open Settings for Multicurrency -->
+    <record id="action_bcv_config_v4" model="ir.actions.act_window">
+        <field name="name">Configuracion Automatica Tasa BCV</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'l10n_ve_ta_multicurrency', 'bin_size': False}</field>
+    </record>
+
+    <!-- Dashboard/Resumen Action (Readonly curated view) -->
+    <record id="action_multicurrency_dashboard" model="ir.actions.act_window">
+        <field name="name">Resumen de Tasas</field>
+        <field name="res_model">res.currency</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">['|', ('l10n_ve_ta_multicurrency_is_reference', '=', True), ('l10n_ve_ta_multicurrency_is_fiscal', '=', True)]</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Aquí puede ver un resumen de las tasas actuales.
+          </p>
+        </field>
+    </record>
+
+    <!-- Guide Action -->
+    <record id="action_l10n_ve_ta_multicurrency_guide" model="ir.actions.act_window">
+        <field name="name">Manual de Usuario</field>
+        <field name="res_model">l10n_ve_ta_multicurrency.guide</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            No hay contenido cargado en la guía.
+          </p>
+        </field>
+    </record>
+
+    <!-- Root Menu Item (The App Icon) -->
+    <menuitem id="menu_multicurrency_root"
+              name="Multimoneda VE"
+              web_icon="l10n_ve_ta_multicurrency,static/description/icon.png"
+              sequence="105"/>
+
+    <!-- Submenu: Dashboard/Resumen -->
+    <menuitem id="menu_multicurrency_dashboard"
+              name="Resumen"
+              parent="menu_multicurrency_root"
+              action="action_multicurrency_dashboard"
+              sequence="10"/>
+
+    <!-- Submenu: Configuración (Group) -->
+    <menuitem id="menu_multicurrency_config_group"
+              name="Configuración"
+              parent="menu_multicurrency_root"
+              sequence="20"/>
+
+    <!-- Submenu: API Configuration -> Opens Settings -->
+    <menuitem id="menu_bcv_config_v4"
+              name="Configuracion Automatica Tasa BCV"
+              parent="menu_multicurrency_config_group"
+              action="action_bcv_config_v4"
+              sequence="10"/>
+
+    <!-- Submenu: Currencies -->
+    <menuitem id="menu_multicurrency_res_currency"
+              name="Monedas"
+              parent="menu_multicurrency_config_group"
+              action="base.action_currency_form"
+              sequence="20"/>
+
+    <!-- Submenu: Guía de Usuario -->
+    <menuitem id="menu_multicurrency_guide"
+              name="Guía de Usuario"
+              parent="menu_multicurrency_root"
+              action="action_l10n_ve_ta_multicurrency_guide"
+              sequence="30"/>
+</odoo>

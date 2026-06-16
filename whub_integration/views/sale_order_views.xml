@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extensión de la vista de Pedidos de Venta para mostrar el ID de WispHub -->
+    <record id="view_order_form_whub_inherit" model="ir.ui.view">
+        <field name="name">sale.order.form.whub.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_whub_simulate_payment" 
+                        string="Simular Pago (WispHub Natural)" 
+                        type="object" 
+                        class="btn-primary" 
+                        invisible="not whub_invoice_id or state != 'draft'"/>
+            </xpath>
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="whub_invoice_id" readonly="1" invisible="not whub_invoice_id"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Se elimina la columna de ID WispHub en la vista de lista de cotizaciones/órdenes -->
+</odoo>

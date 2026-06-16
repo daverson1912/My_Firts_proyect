@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_v3" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.v3</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority">1</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <!-- Usamos 'whub_integration' como name y data-key para que coincida con el módulo -->
+                <app string="Integración WispHub" name="whub_integration" data-key="whub_integration">
+                    <field name="whub_step_1_ok" invisible="1"/>
+                    <field name="whub_step_2_ok" invisible="1"/>
+                    
+                    <block title="Credenciales WispHub" name="whub_creds_block_final">
+                        <setting id="whub_key_setting" title="1. Conexión con WispHub" class="col-12 col-lg-12">
+                            <div style="max-width: 650px;">
+                                <p class="text-muted">
+                                    Configure su llave de acceso (API Key) para que Odoo pueda conectarse de forma segura con su cuenta de WispHub.
+                                </p>
+                                
+                                <div class="alert alert-success d-flex align-items-center mb-2" role="alert" invisible="not whub_step_1_ok">
+                                    <span class="fa fa-check-circle me-2"/> 
+                                    <div><strong>Paso 1 Completado:</strong> API Key guardada correctamente.</div>
+                                </div>
+                                <div class="alert alert-danger d-flex align-items-center mb-2" role="alert" invisible="whub_step_1_ok">
+                                    <span class="fa fa-exclamation-triangle me-2"/> 
+                                    <div><strong>Paso 1 Pendiente:</strong> Configure su API Key para comenzar.</div>
+                                </div>
+
+                                <button name="action_open_api_config" string="Configurar API Key" type="object" class="btn-primary" icon="fa-key"/>
+                            </div>
+                        </setting>
+
+
+
+                        <setting id="whub_wizard_setting" title="2. Sincronización de Datos" class="col-12 col-lg-12">
+                            <div style="max-width: 650px;">
+                                <p class="text-muted">
+                                    Use esta herramienta para vincular sus clientes y productos existentes, o traer nuevos elementos desde WispHub hacia Odoo.
+                                </p>
+
+                                <!-- Alertas de estado paso 2 -->
+                                <div class="alert alert-warning d-flex align-items-center mb-2" role="alert" invisible="whub_step_1_ok">
+                                    <span class="fa fa-lock me-2"/> 
+                                    <div><strong>Paso 2 Bloqueado:</strong> Requiere configurar la API Key en el Paso 1.</div>
+                                </div>
+                                <div class="alert alert-info d-flex align-items-center mb-2" role="alert" invisible="not whub_step_1_ok or whub_step_2_ok">
+                                    <span class="fa fa-info-circle me-2"/> 
+                                    <div><strong>Paso 2 Habilitado:</strong> Pendiente realizar la homologación de clientes y productos.</div>
+                                </div>
+                                <div class="alert alert-success d-flex align-items-center mb-2" role="alert" invisible="not whub_step_2_ok">
+                                    <span class="fa fa-check-circle me-2"/> 
+                                    <div><strong>Paso 2 Completado:</strong> Datos sincronizados correctamente.</div>
+                                </div>
+
+                                <p class="text-muted mb-2" invisible="not whub_step_2_ok">
+                                    Última sincronización general: <field name="whub_sync_date" class="fw-bold"/>
+                                </p>
+
+                                <button name="action_open_homologation_wizard" string="Sincronizar Información" type="object" class="btn-primary" icon="fa-refresh" invisible="not whub_step_1_ok"/>
+                            </div>
+                        </setting>
+
+                        <setting id="whub_sync_invoices_setting" title="3. Avisos de Cobro" class="col-12 col-lg-12">
+                            <div style="max-width: 650px;">
+                                <p class="text-muted">
+                                    Sincronice los avisos de cobro de WispHub para crear automáticamente Órdenes de Venta en Odoo.
+                                    El sistema verifica mapeos y previene duplicados.
+                                </p>
+
+                                <!-- Alertas de estado paso 3 -->
+                                <div class="alert alert-warning d-flex align-items-center mb-2" role="alert" invisible="whub_step_2_ok">
+                                    <span class="fa fa-lock me-2"/> 
+                                    <div><strong>Paso 3 Bloqueado:</strong> Requiere completar la sincronización inicial del Paso 2.</div>
+                                </div>
+                                <div class="alert alert-success d-flex align-items-center mb-2" role="alert" invisible="not whub_step_2_ok">
+                                    <span class="fa fa-check-circle me-2"/> 
+                                    <div><strong>Paso 3 Habilitado:</strong> Listo para procesar y consultar avisos de cobro.</div>
+                                </div>
+
+                                <div class="d-flex flex-column gap-2" style="max-width: 340px;" invisible="not whub_step_2_ok">
+                                    <button name="action_sync_payment_notices" string="Sincronizar Avisos de Cobro"
+                                            type="object" class="btn btn-primary w-100 text-start" icon="fa-money"/>
+                                    <button name="action_open_sync_date_wizard" string="Consultar Avisos por Fechas"
+                                            type="object" class="btn btn-outline-secondary w-100 text-start" icon="fa-calendar"/>
+                                    <button name="action_open_sync_log" string="Ver Log de Sincronización"
+                                            type="object" class="btn btn-outline-secondary w-100 text-start" icon="fa-history"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

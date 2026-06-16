@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Cron: Envío automático de comprobantes de retención IVA/ISLR -->
+        <record id="cron_send_wh_mail" model="ir.cron">
+            <field name="name">Envío automático de comprobantes de retención (IVA/ISLR)</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'wh.email.background.service')]"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_send_pending_wh_emails()</field>
+            <field name="interval_number">15</field>
+            <field name="interval_type">minutes</field>
+            <field name="active">True</field>
+            <field name="priority">100</field>
+        </record>
+    </data>
+</odoo>

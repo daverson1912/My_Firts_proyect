@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- 
+            Ejecutar sincronización ISLR en cada actualización del módulo (-u).
+            noupdate="0" garantiza que se re-ejecute siempre.
+        -->
+        <function model="simplitfiscal.config" name="trigger_islr_sync_on_update"/>
+    </data>
+</odoo>

@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_whub_homologation_wizard,whub.homologation.wizard,model_whub_homologation_wizard,base.group_user,1,1,1,1
+access_whub_config_wizard,whub.config.wizard,model_whub_config_wizard,base.group_user,1,1,1,1
+access_whub_creation_selection_wizard,whub.creation.selection.wizard,model_whub_creation_selection_wizard,base.group_user,1,1,1,1
+access_whub_creation_selection_line,whub.creation.selection.line,model_whub_creation_selection_line,base.group_user,1,1,1,1
+access_whub_homologation_category_line,whub.homologation.category.line,model_whub_homologation_category_line,base.group_user,1,1,1,1
+access_whub_homologation_product_line,whub.homologation.product.line,model_whub_homologation_product_line,base.group_user,1,1,1,1
+access_whub_homologation_plan_line,whub.homologation.plan.line,model_whub_homologation_plan_line,base.group_user,1,1,1,1
+access_whub_homologation_customer_line,whub.homologation.customer.line,model_whub_homologation_customer_line,base.group_user,1,1,1,1
+access_whub_homologation_batch_wizard,whub.homologation.batch.wizard,model_whub_homologation_batch_wizard,base.group_user,1,1,1,1
+access_whub_homologation_batch_line,whub.homologation.batch.line,model_whub_homologation_batch_line,base.group_user,1,1,1,1
+access_res_company_whub,res.company.whub,model_res_company,base.group_user,1,1,1,1
+access_whub_notice_sync_log,whub.notice.sync.log,model_whub_notice_sync_log,base.group_user,1,1,1,1
+access_whub_notice_sync_log_admin,whub.notice.sync.log.admin,model_whub_notice_sync_log,base.group_system,1,1,1,1
+access_whub_notice_sync_wizard,whub.notice.sync.wizard,model_whub_notice_sync_wizard,base.group_user,1,1,1,1

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_sales_ledger_igtf">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="article" style="font-family: Arial, sans-serif; font-size: 8px; color: #000000; width: 100%;">
+                    <!-- Header Seciton (No Bootstrap Rows) -->
+                    <div style="width: 100%; margin-bottom: 20px; overflow: hidden;">
+                        <!-- Left: Company Info -->
+                        <div style="float: left; width: 40%; text-align: left;">
+                            <div style="font-weight: bold; font-size: 16px; margin-bottom: 2px;"><t t-esc="o.company_id.name"/></div>
+                            <div style="font-weight: bold; font-size: 11px;"><t t-esc="o.company_id.vat"/></div>
+                            <div style="font-size: 9px; margin-top: 5px; text-transform: uppercase;">
+                                <t t-esc="o.company_id.street"/> <t t-esc="o.company_id.street2 or ''"/><br/>
+                                <t t-esc="o.company_id.city or ''"/> <t t-esc="o.company_id.state_id.name or ''"/>
+                            </div>
+                        </div>
+                        
+                        <!-- Center: Title -->
+                        <div style="float: left; width: 20%; text-align: center; margin-top: 20px;">
+                            <div style="font-weight: bold; font-size: 16px;">Libro de Ventas IVA</div>
+                            <div style="font-size: 12px;"><t t-esc="o.date_from.strftime('%B')"/> de <t t-esc="o.date_from.strftime('%Y')"/></div>
+                        </div>
+
+                        <!-- Right: Date/Page -->
+                        <div style="float: right; width: 40%; text-align: right;">
+                            <div><t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y')"/></div>
+                            <div>Página <span class="page"/> de <span class="topage"/></div>
+                        </div>
+                    </div>
+
+                    <div style="clear: both;"></div>
+
+                    <!-- Main Table (22 Columns) -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 7px;">
+                        <thead>
+                            <!-- Header Row 1 (Group Headers ONLY) -->
+                            <tr style="border-bottom: 2px solid #000000;">
+                                <th colspan="3" style="width: 20%;"></th>
+                                <th colspan="2" style="width: 8%; text-align: center; padding: 2px; font-size: 11px; font-weight: bold;">Facturas</th>
+                                <th colspan="2" style="width: 8%; text-align: center; padding: 2px; font-size: 11px; font-weight: bold;">Notas de Credito</th>
+                                <th colspan="2" style="width: 12%;"></th>
+                                <th colspan="3" style="width: 10%; text-align: center; padding: 2px; font-size: 11px; font-weight: bold;">IGTF</th>
+                                <th style="width: 5%;"></th>
+                                <th colspan="3" style="width: 10%; text-align: center; padding: 2px; font-size: 11px; font-weight: bold;">Alicuota General</th>
+                                <th colspan="3" style="width: 10%; text-align: center; padding: 2px; font-size: 11px; font-weight: bold;">Alicuota Reducida</th>
+                                <th colspan="3" style="width: 10%; text-align: center; padding: 2px; font-size: 11px; font-weight: bold;">Alicuota Adicional</th>
+                            </tr>
+                            <!-- Header Row 2 (Detailed Column Names) -->
+                            <tr style="border-bottom: 1px solid #000000; font-size: 6px; font-weight: bold;">
+                                <th style="width: 5%; text-align: left; padding: 2px;">Fecha</th>
+                                <th style="width: 8%; text-align: left; padding: 2px;">Razon Social.</th>
+                                <th style="width: 7%; text-align: left; padding: 2px;">Serial</th>
+                                <!-- Facturas -->
+                                <th style="text-align: center; border-bottom: 1px solid #000000; width: 4%;">Desde</th>
+                                <th style="text-align: center; border-bottom: 1px solid #000000; width: 4%;">Hasta</th>
+                                <!-- NC -->
+                                <th style="text-align: center; border-bottom: 1px solid #000000; width: 4%;">Desde</th>
+                                <th style="text-align: center; border-bottom: 1px solid #000000; width: 4%;">Hasta</th>
+                                <!-- N° Z and Total -->
+                                <th style="width: 5%; text-align: center; padding: 2px;">N° Z</th>
+                                <th style="width: 7%; text-align: right; padding: 2px; word-wrap: break-word;">Total Ventas Incluyendo IVA</th>
+                                <!-- IGTF -->
+                                <th style="text-align: right; border-bottom: 1px solid #000000; width: 4%;">Base Imponible</th>
+                                <th style="text-align: center; border-bottom: 1px solid #000000; width: 2%;">Alic. %</th>
+                                <th style="text-align: right; border-bottom: 1px solid #000000; width: 4%;">Monto IGTF</th>
+                                <!-- Exempt -->
+                                <th style="width: 5%; text-align: center; padding: 2px; word-wrap: break-word;">Ventas Exentas o No Gravadas</th>
+                                <!-- General -->
+                                <th style="text-align: right; border-bottom: 1px solid #000000; width: 4%;">Base Imponible</th>
+                                <th style="text-align: center; border-bottom: 1px solid #000000; width: 2%;">Alic. %</th>
+                                <th style="text-align: right; border-bottom: 1px solid #000000; width: 4%;">Monto Iva</th>
+                                <!-- Reducida -->
+                                <th style="text-align: right; border-bottom: 1px solid #000000; width: 4%;">Base Imponible</th>
+                                <th style="text-align: center; border-bottom: 1px solid #000000; width: 2%;">Alic. %</th>
+                                <th style="text-align: right; border-bottom: 1px solid #000000; width: 4%;">Monto Iva</th>
+                                <!-- Adicional -->
+                                <th style="text-align: right; border-bottom: 1px solid #000000; width: 4%;">Base Imponible</th>
+                                <th style="text-align: center; border-bottom: 1px solid #000000; width: 2%;">Alic. %</th>
+                                <th style="text-align: right; border-bottom: 1px solid #000000; width: 4%;">Monto Iva</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="grand_total" t-value="0.0"/>
+                            <t t-set="grand_igtf_base" t-value="0.0"/>
+                            <t t-set="grand_igtf_amount" t-value="0.0"/>
+                            <t t-set="grand_exempt" t-value="0.0"/>
+                            <t t-set="grand_gen_base" t-value="0.0"/>
+                            <t t-set="grand_gen_iva" t-value="0.0"/>
+                            <t t-set="grand_red_base" t-value="0.0"/>
+                            <t t-set="grand_red_iva" t-value="0.0"/>
+
+                            <t t-foreach="o._get_ledger_data()" t-as="l">
+                                <tr style="border-bottom: 1px solid #EEEEEE;">
+                                    <td style="padding: 2px;"><t t-esc="l['date'].strftime('%d/%m/%Y')"/></td>
+                                    <td style="padding: 2px;">RESUMEN DIARIO</td>
+                                    <td style="padding: 2px;"><t t-esc="l['serial']"/></td>
+                                    <!-- Facturas -->
+                                    <td style="text-align: center; padding: 2px;"><t t-esc="l['inv_desde']"/></td>
+                                    <td style="text-align: center; padding: 2px;"><t t-esc="l['inv_hasta']"/></td>
+                                    <!-- NC -->
+                                    <td style="text-align: center; padding: 2px;"><t t-esc="l['nc_desde']"/></td>
+                                    <td style="text-align: center; padding: 2px;"><t t-esc="l['nc_hasta']"/></td>
+                                    <!-- Z -->
+                                    <td style="text-align: center; padding: 2px;"><t t-esc="l['z_number']"/></td>
+                                    <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(l['total_with_iva']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <!-- IGTF -->
+                                    <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(l['igtf_base']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="text-align: center; padding: 2px;"><t t-esc="'{:,.2f}'.format(3.00 if l['igtf_amount'] else 0.0).replace('.', ',')"/></td>
+                                    <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(l['igtf_amount']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <!-- Exempt -->
+                                    <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(l['exempt_amount']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <!-- General -->
+                                    <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(l['general_base']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="text-align: center; padding: 2px;">16,00</td>
+                                    <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(l['general_iva']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <!-- Reduced -->
+                                    <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(l['reduced_base']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="text-align: center; padding: 2px;"><t t-if="l['reduced_base']">8,00</t><t t-else="">0,00</t></td>
+                                    <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(l['reduced_iva']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <!-- Additional (Zero) -->
+                                    <td style="text-align: right; padding: 2px;">0,00</td>
+                                    <td style="text-align: center; padding: 2px;">0,00</td>
+                                    <td style="text-align: right; padding: 2px;">0,00</td>
+                                </tr>
+                                <t t-set="grand_total" t-value="grand_total + l['total_with_iva']"/>
+                                <t t-set="grand_igtf_base" t-value="grand_igtf_base + l['igtf_base']"/>
+                                <t t-set="grand_igtf_amount" t-value="grand_igtf_amount + l['igtf_amount']"/>
+                                <t t-set="grand_exempt" t-value="grand_exempt + l['exempt_amount']"/>
+                                <t t-set="grand_gen_base" t-value="grand_gen_base + l['general_base']"/>
+                                <t t-set="grand_gen_iva" t-value="grand_gen_iva + l['general_iva']"/>
+                                <t t-set="grand_red_base" t-value="grand_red_base + l['reduced_base']"/>
+                                <t t-set="grand_red_iva" t-value="grand_red_iva + l['reduced_iva']"/>
+                            </t>
+                        </tbody>
+                        <tfoot style="font-weight: bold; border-top: 2px solid #000000;">
+                            <tr>
+                                <td colspan="8" style="text-align: right; padding: 2px;">TOTALES</td>
+                                <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(grand_total).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                <!-- IGTF Totals -->
+                                <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(grand_igtf_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                <td></td>
+                                <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(grand_igtf_amount).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                <!-- Exempt -->
+                                <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(grand_exempt).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                <!-- General Totals -->
+                                <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(grand_gen_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                <td></td>
+                                <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(grand_gen_iva).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                <!-- Red/Add -->
+                                <td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(grand_red_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td><td></td><td style="text-align: right; padding: 2px;"><t t-esc="'{:,.2f}'.format(grand_red_iva).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                <td style="text-align: right; padding: 2px;">0,00</td><td></td><td style="text-align: right; padding: 2px;">0,00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+    <template id="report_sales_ledger_detailed">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="article" style="font-family: Arial, sans-serif; font-size: 6px; color: #000; width: 100%;">
+                    
+                    <style>
+                        table, tr, td, th, tbody, thead {
+                            border: 0 !important;
+                            border-style: none !important;
+                            border-width: 0 !important;
+                            border-collapse: collapse !important;
+                            border-spacing: 0 !important;
+                            outline: none !important;
+                        }
+                        * {
+                            border: 0 !important;
+                            border-style: none !important;
+                        }
+                    </style>
+
+                    <div style="width: 100%; margin-bottom: 8px;">
+                        <div style="font-weight: bold;">CONTRIBUYENTE: <t t-esc="o.company_id.name"/></div>
+                        <div style="font-weight: bold;">R.I.F. No.: <t t-esc="o.company_id.vat"/></div>
+                        <div style="font-weight: bold;">DIRECCIÓN FISCAL: <t t-esc="o.company_id.street"/> <t t-esc="o.company_id.city"/></div>
+                        <br/>
+                     <div style="font-weight: bold; font-size: 10px; text-align: center;">
+                                LIBRO DE VENTAS CORRESPONDIENTE AL PERIODO <t t-esc="o.date_from.strftime('%m')"/> Año: <t t-esc="o.date_from.strftime('%Y')"/>
+                          </div>
+                    </div>
+
+                    <table frame="void" rules="none" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; border: 0; margin: 0; padding: 0;">
+                        <colgroup>
+                            <col style="width: 1.5%;"/> <col style="width: 3.5%;"/> <col style="width: 6%;"/> <col style="width: 14%;"/>
+                            <col style="width: 2.5%;"/> <col style="width: 2.5%;"/> <col style="width: 2.0%;"/> <col style="width: 2.0%;"/>
+                            <col style="width: 2.5%;"/> <col style="width: 2.5%;"/> <col style="width: 4.5%;"/> <col style="width: 3.5%;"/>
+                            <col style="width: 4.5%;"/> <col style="width: 1%;"/> <col style="width: 4.5%;"/>
+                            <col style="width: 4.5%;"/> <col style="width: 1%;"/> <col style="width: 4.5%;"/>
+                            <col style="width: 4.5%;"/> <col style="width: 1%;"/> <col style="width: 4.5%;"/>
+                            <col style="width: 4.5%;"/> <col style="width: 1%;"/> <col style="width: 4.5%;"/>
+                            <col style="width: 3%;"/> <col style="width: 3%;"/> <col style="width: 3.5%;"/>
+                        </colgroup>
+                        
+                        <thead>
+                            <tr style="text-align: center; font-weight: bold; background-color: #f2f2f2; border-top: 0.5px solid #000 !important; border-bottom: 0.5px solid #000 !important;">
+                                <th colspan="12" style="padding: 2px;">DATOS DE LA OPERACIÓN</th>
+                                <th colspan="6" style="padding: 2px;">VENTAS A CONTRIBUYENTES</th>
+                                <th colspan="6" style="padding: 2px;">VENTAS A NO CONTRIBUYENTES</th>
+                                <th colspan="3" style="padding: 2px;">RETENCIÓN</th>
+                            </tr>
+                            <tr style="text-align: center; font-weight: bold; background-color: #f2f2f2;">
+                                <th colspan="12" style="padding: 1px;"/>
+                                <th colspan="3" style="padding: 1px;">Alícuota General</th>
+                                <th colspan="3" style="padding: 1px;">Alícuota Reducida</th>
+                                <th colspan="3" style="padding: 1px;">Alícuota General</th>
+                                <th colspan="3" style="padding: 1px;">Alícuota Reducida</th>
+                                <th colspan="3" style="padding: 1px;"/>
+                            </tr>
+                            <tr style="text-align: center; font-weight: bold; background-color: #e6e6e6; font-size: 5px; border-top: 0.5px solid #000 !important; border-bottom: 0.5px solid #000 !important;">
+                                <th style="padding: 2px;">Oper Nro</th>
+                                <th style="padding: 2px;">Fecha Factura</th>
+                                <th style="padding: 2px;">RIF</th>
+                                <th style="padding: 2px;">Nombre Cliente o Razón Social</th>
+                                <th style="padding: 2px;">Nro Factura</th>
+                                <th style="padding: 2px;">Nro Control</th>
+                                <th style="padding: 2px;">Nro Nota Débito</th>
+                                <th style="padding: 2px;">Nro Nota Crédito</th>
+                                <th style="padding: 2px;">Tipo Tran</th>
+                                <th style="padding: 2px;">Fact. Afectada</th>
+                                <th style="padding: 2px;">Total con IVA</th>
+                                <th style="padding: 2px;">Ventas Exentas</th>
+                                <th style="padding: 2px;">Base</th> <th style="padding: 2px;">%</th> <th style="padding: 2px;">IVA</th>
+                                <th style="padding: 2px;">Base</th> <th style="padding: 2px;">%</th> <th style="padding: 2px;">IVA</th>
+                                <th style="padding: 2px;">Base</th> <th style="padding: 2px;">%</th> <th style="padding: 2px;">IVA</th>
+                                <th style="padding: 2px;">Base</th> <th style="padding: 2px;">%</th> <th style="padding: 2px;">IVA</th>
+                                <th style="padding: 2px;">IVA Retenido</th>
+                                <th style="padding: 2px;">Nro Comp.</th>
+                                <th style="padding: 2px;">Fecha Comp.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="t_total_iva" t-value="0.0"/><t t-set="t_exento" t-value="0.0"/>
+                            <t t-set="t_base_g" t-value="0.0"/><t t-set="t_iva_g" t-value="0.0"/>
+                            <t t-set="t_base_r" t-value="0.0"/><t t-set="t_iva_r" t-value="0.0"/>
+                            <t t-set="t_retenido" t-value="0.0"/>
+                            <t t-foreach="o._get_ledger_data()" t-as="l">
+                                 <tr style="text-align: center;">
+                                    <td style="padding: 1px;"><t t-esc="l['ope']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['date'].strftime('%d/%m/%Y')"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['rif']"/></td>
+                                    <td style="padding: 1px; text-align: left;"><t t-esc="l['name']"/></td>
+                                    <td style="padding: 1px;"><t t-if="l['tipo_tran'] and l['tipo_tran'].startswith('01')" t-esc="l['doc_num']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['serial']"/></td>
+                                    <td style="padding: 1px;"><t t-if="l['tipo_tran'] and l['tipo_tran'].startswith('02')" t-esc="l['doc_num']"/></td>
+                                    <td style="padding: 1px;"><t t-if="l['tipo_tran'] and l['tipo_tran'].startswith('03')" t-esc="l['doc_num']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['tipo_tran']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['fac_afectada']"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['total_c_iva']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['exempt']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('base_g_cnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px;">16</td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('iva_g_cnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('base_r_cnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px;">8</td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('iva_r_cnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('base_g_ncnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px;">16</td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('iva_g_ncnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('base_r_ncnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px;">8</td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('iva_r_ncnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['iva_retenido']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['nro_ret']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['fecha_ret']"/></td>
+                                </tr>
+                                <t t-set="t_total_iva" t-value="t_total_iva + l['total_c_iva']"/>
+                                <t t-set="t_exento" t-value="t_exento + l['exempt']"/>
+                                <t t-set="t_base_g" t-value="t_base_g + l.get('base_g_cnt', 0.0) + l.get('base_g_ncnt', 0.0)"/>
+                                <t t-set="t_iva_g" t-value="t_iva_g + l.get('iva_g_cnt', 0.0) + l.get('iva_g_ncnt', 0.0)"/>
+                                <t t-set="t_retenido" t-value="t_retenido + l['iva_retenido']"/>
+                            </t>
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 12px; width: 380px;">
+                        <table frame="void" rules="none" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; border: 0;">
+                            <tr style="background-color: #e6e6e6; font-weight: bold; text-align: center; border-top: 0.5px solid #000 !important; border-bottom: 0.5px solid #000 !important;">
+                                <td colspan="3" style="padding: 3px;">RESUMEN DE DÉBITOS FISCALES</td>
+                            </tr>
+                            <tr style="background-color: #f2f2f2; font-weight: bold; text-align: center; border-bottom: 0.5px solid #000 !important;">
+                                <td style="width: 50%; padding: 2px;">Descripción</td>
+                                <td style="width: 25%; padding: 2px;">Base Imponible</td>
+                                <td style="width: 25%; padding: 2px;">Débito Fiscal</td>
+                            </tr>
+                            <tr><td style="padding-left: 5px;">Ventas Internas No Gravadas</td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_exento).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td><td style="text-align: right; padding-right: 5px;">0,00</td></tr>
+                            <tr><td style="padding-left: 5px;">Ventas de Exportación</td><td style="text-align: right; padding-right: 5px;">0,00</td><td style="text-align: right; padding-right: 5px;">0,00</td></tr>
+                            <tr><td style="padding-left: 5px;">Ventas Internas Gravadas por Alícuota General (16%)</td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_base_g).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_iva_g).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td></tr>
+                            <tr><td style="padding-left: 5px;">Ventas Internas Gravadas por Alícuota General + Adicional</td><td style="text-align: right; padding-right: 5px;">0,00</td><td style="text-align: right; padding-right: 5px;">0,00</td></tr>
+                            <tr><td style="padding-left: 5px;">Ventas Internas Gravadas por Alícuota Reducida (8%)</td><td style="text-align: right; padding-right: 5px;">0,00</td><td style="text-align: right; padding-right: 5px;">0,00</td></tr>
+                            <tr style="font-weight: bold; background-color: #f2f2f2; border-top: 0.5px solid #000 !important;"><td style="padding-left: 5px;">TOTAL VENTAS Y DÉBITOS FISCALES</td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_base_g + t_exento).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_iva_g).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td></tr>
+                            <tr><td style="padding-left: 5px; font-weight: bold;">I.V.A. RETENIDO POR EL COMPRADOR</td><td style="background-color: #eee;"/><td style="text-align: right; padding-right: 5px; font-weight: bold;"><t t-esc="'{:,.2f}'.format(t_retenido).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td></tr>
+                        </table>
+                    </div>
+
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

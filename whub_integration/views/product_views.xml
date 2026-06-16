@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- La pestaña WispHub fue eliminada de la ficha de producto.
+         Los campos whub_product_id y whub_plan_id son llaves internas de mapeo
+         usadas únicamente por el motor de sincronización. No deben ser visibles por el usuario final. -->
+</odoo>

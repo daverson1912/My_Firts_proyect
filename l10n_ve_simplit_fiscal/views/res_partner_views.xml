@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Formulario de Proveedor: Agregar campo de retención -->
+    <record id="view_partner_form_inherit_l10n_ve_fiscal" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.l10n.ve.fiscal</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Agregar campo en la pestaña "Ventas y Compras" -->
+            <!-- Agregar campo en la pestaña "Ventas y Compras" -->
+            <!-- Mover configuración de retenciones al final de la pestaña Ventas y Compras -->
+            <xpath expr="//page[@name='sales_purchases']" position="inside">
+                <group string="Retenciones Fiscales" name="retenciones_fiscales_footer">
+                    <group string="Compras" name="retenciones_fiscales_compra">
+                        <field name="l10n_ve_is_wh_iva_agent" string="Sujeto a Retención IVA"/>
+                        <field name="l10n_ve_supplier_retention_type" 
+                               string="Porcentaje Retención IVA"
+                               widget="radio"
+                               options="{'horizontal': true}"
+                               invisible="not l10n_ve_is_wh_iva_agent"/>
+                        <field name="l10n_ve_is_islr_payer" string="Sujeto a Retención ISLR"/>
+                        <field name="l10n_ve_islr_provider_type_id" 
+                               string="Beneficiario de Pago"
+                               options="{'no_create': True}"
+                               required="l10n_ve_is_islr_payer"
+                               invisible="not l10n_ve_is_islr_payer"/>
+                    </group>
+                    <group string="Ventas" name="retenciones_fiscales_venta">
+                        <field name="l10n_ve_customer_iva_agent" string="Agente de Retención IVA"/>
+                    </group>
+                </group>
+            </xpath>
+
+            
+        </field>
+    </record>
+    
+</odoo>

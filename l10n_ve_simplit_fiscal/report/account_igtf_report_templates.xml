@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_igtf_general">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="page" style="font-family: 'Arial', 'Helvetica', sans-serif !important; font-size: 11px; color: #000000 !important; line-height: 1.2;">
+                    <!-- Cabecera Table (Replaces Bootstrap Row) -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <tr>
+                            <td style="width: 50%; vertical-align: top;">
+                                <div style="font-weight: bold; font-size: 13px; color: #444444; text-transform: uppercase;"><t t-esc="o.company_id.name"/></div>
+                                <div style="font-weight: bold; color: #666666;"><t t-esc="o.company_id.vat"/></div>
+                                <div style="font-size: 9px; line-height: 1.1; color: #888888; text-transform: uppercase;">
+                                    <t t-esc="o.company_id.street"/><br/>
+                                    <t t-esc="o.company_id.city"/> - <t t-esc="o.company_id.state_id.name"/>
+                                </div>
+                            </td>
+                            <td style="width: 50%; vertical-align: top; text-align: right;">
+                                <div style="font-size: 10px; color: #888888;">
+                                    <t t-if="context_today">
+                                        <t t-set="now" t-value="context_today().strftime('%d/%m/%Y %I:%M:%S %p').lower().replace('am', 'a. m.').replace('pm', 'p. m.')"/>
+                                        <t t-esc="now"/>
+                                    </t>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <div style="text-align: center; margin-top: 40px; margin-bottom: 30px;">
+                        <div style="font-weight: bold; color: #444444; font-size: 26px; text-transform: uppercase;">Reporte de IGTF</div>
+                        <div style="margin-top: 10px;">
+                            <span style="padding: 6px 20px; border-radius: 4px; font-weight: bold; color: #666666; font-size: 13px; display: inline-block;">
+                                Desde <t t-esc="o.date_from.strftime('%d/%m/%Y')"/> hasta: <t t-esc="o.date_to.strftime('%d/%m/%Y')"/> 
+                                <span style="margin-left: 20px; color: #999999;">Montos: Originales</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Centrado de tabla principal -->
+                    <div style="margin-bottom: 40px;">
+                        <table class="table table-sm" style="width: 90%; margin: 0 auto; border-collapse: separate; border-spacing: 0;">
+                            <thead>
+                                <tr style="background-color: #F97316; color: white;">
+                                    <th style="padding: 10px; border-top-left-radius: 8px;">Fecha</th>
+                                    <th style="padding: 10px; text-align: center;">N. Facturas</th>
+                                    <th style="padding: 10px; text-align: center;">N. Notas C</th>
+                                    <th style="padding: 10px; text-align: right;">Venta total</th>
+                                    <th style="padding: 10px; text-align: right;">Base</th>
+                                    <th style="padding: 10px; text-align: center;">%</th>
+                                    <th style="padding: 10px; text-align: right; border-top-right-radius: 8px;">IGTF</th>
+                                </tr>
+                            </thead>
+                            <t t-set="data" t-value="o._get_igtf_data()"/>
+                            <tbody>
+                                <t t-foreach="data['lines']" t-as="l">
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 6px;"><t t-esc="l['date'].strftime('%d/%m/%Y')"/></td>
+                                        <td style="padding: 6px; text-align: center;"><t t-esc="l['n_facturas']"/></td>
+                                        <td style="padding: 6px; text-align: center;"><t t-esc="l['n_notas_c']"/></td>
+                                        <td style="padding: 6px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['venta_total']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                        <td style="padding: 6px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['base']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                        <td style="padding: 6px; text-align: center;"><t t-esc="'%.0f' % l['percentage']"/></td>
+                                        <td style="padding: 6px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['igtf']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <tfoot>
+                                <tr style="background-color: #F97316; color: white; font-weight: bold;">
+                                    <td colspan="3" style="padding: 8px; text-align: center; border-bottom-left-radius: 8px;"></td>
+                                    <td style="padding: 8px; text-align: right;"><t t-esc="'{:,.2f}'.format(data['total_general']['venta_total']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 8px; text-align: right;"><t t-esc="'{:,.2f}'.format(data['total_general']['base']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 8px; text-align: center;"></td>
+                                    <td style="padding: 8px; text-align: right; border-bottom-right-radius: 8px;"><t t-esc="'{:,.2f}'.format(data['total_general']['igtf']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Tabla de Resumen Inferior Centrada -->
+                    <div style="margin-top: 60px;">
+                        <table style="width: 60%; margin: 0 auto; border: 2px solid black; border-collapse: collapse; text-align: center; font-weight: bold;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid black;">
+                                    <th style="padding: 5px; border-right: 2px solid black;">CONCEPTO</th>
+                                    <th style="padding: 5px; border-right: 2px solid black;">Transacciones</th>
+                                    <th style="padding: 5px; border-right: 2px solid black;">Base</th>
+                                    <th style="padding: 5px;">IGTF</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 2px solid black;">
+                                    <td style="padding: 5px; text-align: left; border-right: 2px solid black;">Facturas</td>
+                                    <td style="padding: 5px; border-right: 2px solid black; color: #444;"><t t-esc="'%.2f' % data['summary']['out_invoice']['count']"/></td>
+                                    <td style="padding: 5px; text-align: right; border-right: 2px solid black; color: #444;"><t t-esc="'{:,.2f}'.format(data['summary']['out_invoice']['base']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 5px; text-align: right; color: #444;"><t t-esc="'{:,.2f}'.format(data['summary']['out_invoice']['igtf']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                </tr>
+                                <tr style="border-bottom: 2px solid black;">
+                                    <td style="padding: 5px; text-align: left; border-right: 2px solid black;">Notas de creditos</td>
+                                    <td style="padding: 5px; border-right: 2px solid black; color: #444;"><t t-esc="'%.2f' % data['summary']['out_refund']['count']"/></td>
+                                    <td style="padding: 5px; text-align: right; border-right: 2px solid black; color: #444;"><t t-esc="'{:,.2f}'.format(data['summary']['out_refund']['base']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 5px; text-align: right; color: #444;"><t t-esc="'{:,.2f}'.format(data['summary']['out_refund']['igtf']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                </tr>
+                            </tbody>
+                            <tfoot style="border-top: 2px solid black;">
+                                <tr>
+                                    <td style="padding: 5px; text-align: center; border-right: 2px solid black;">Total</td>
+                                    <td style="padding: 5px; border-right: 2px solid black; color: #1E40AF;"><t t-esc="'%.2f' % data['total_general']['transactions']"/></td>
+                                    <td style="padding: 5px; text-align: right; border-right: 2px solid black; color: #1E40AF;"><t t-esc="'{:,.2f}'.format(data['total_general']['base']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 5px; text-align: right; color: #1E40AF;"><t t-esc="'{:,.2f}'.format(data['total_general']['igtf']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="footer">
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

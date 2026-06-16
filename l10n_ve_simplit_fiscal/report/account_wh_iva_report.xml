@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Formato de Papel: Carta Horizontal (Landscape) -->
+    <!-- Definimos esto porque el reporte tiene muchas columnas -->
+    <record id="paperformat_wh_iva" model="report.paperformat">
+        <field name="name">Carta Horizontal Retención</field>
+        <field name="default" eval="True"/>
+        <field name="format">Letter</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">10</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- Acción del Reporte -->
+    <!-- Vincula el modelo account.wh.iva.summary con el template -->
+    <record id="action_report_wh_iva" model="ir.actions.report">
+        <field name="name">Comprobante de Retención IVA</field>
+        <field name="model">account.wh.iva.summary</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_ve_simplit_fiscal.report_wh_iva</field>
+        <field name="report_file">l10n_ve_simplit_fiscal.report_wh_iva</field>
+        <field name="print_report_name">'Comprobante_IVA_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_account_wh_iva_summary"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_wh_iva"/>
+    </record>
+
+</odoo>

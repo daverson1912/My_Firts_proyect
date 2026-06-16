@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <record id="product_template_form_view_inherit_l10n_ve_islr" model="ir.ui.view">
+        <field name="name">product.template.form.inherit.l10n.ve.islr</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            
+            <xpath expr="//page[@name='general_information']" position="after">
+                <page name="l10n_ve_ret_islr" string="Ret. ISLR">
+                    <group>
+                        <group string="Configuración">
+                            <field name="l10n_ve_apply_islr"/>
+                            <field name="l10n_ve_islr_rate_id" 
+                                   options="{'no_create': True}"
+                                   invisible="not l10n_ve_apply_islr"
+                                   required="l10n_ve_apply_islr"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+
+</odoo>

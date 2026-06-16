@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_l10n_ve_ta_multicurrency" model="ir.ui.view">
+        <field name="name">res.config.settings.form.l10n_ve_ta_multicurrency</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Multimoneda VE" string="Multimoneda VE" name="l10n_ve_ta_multicurrency">
+                    
+                    <!-- BLOQUE: SINCRONIZACION DE TASAS -->
+                    <block title="Sincronización de Tasas (BCV)" name="l10n_ve_ta_multicurrency_settings">
+                        <div class="row w-100 g-3 px-3">
+                            <!-- Caja Izquierda: Tasa Actual y Última Fecha -->
+                            <div class="col-md-6">
+                                <div class="bg-white p-3 border rounded shadow-sm d-flex flex-column align-items-center justify-content-center" style="min-height: 140px;">
+                                    <div class="d-flex align-items-center w-100 mb-3 justify-content-center">
+                                        <div class="text-center px-4" style="flex: 1;">
+                                            <span class="text-muted small text-uppercase fw-bold d-block mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">TASA ACTUAL</span>
+                                            <div class="fw-bold text-dark" style="font-size: 1.6rem; letter-spacing: -0.5px;">
+                                                <field name="l10n_ve_ta_multicurrency_last_rate" options="{'digits': [12, 4]}" readonly="1"/>
+                                                <span class="ms-1 small text-muted" style="font-size: 1rem;">Bs.</span>
+                                            </div>
+                                        </div>
+                                        <div class="bg-light" style="width: 1px; height: 60px; background-color: #dee2e6 !important;"/>
+                                        <div class="text-center px-4" style="flex: 1;">
+                                            <span class="text-muted small text-uppercase fw-bold d-block mb-1" style="font-size: 0.8rem; letter-spacing: 0.5px;">ÚLTIMA FECHA</span>
+                                            <div class="fw-bold" style="font-size: 1.4rem; color: #a24b67;">
+                                                <field name="l10n_ve_ta_multicurrency_last_sync_date" readonly="1"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <button name="action_l10n_ve_ta_multicurrency_sync_now" 
+                                                type="object" 
+                                                string="Sincronizar Ahora" 
+                                                class="btn btn-outline-secondary rounded-pill px-4" 
+                                                style="border-color: #8f6085; color: #8f6085; font-size: 0.85rem; font-weight: 500;"/>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Caja Derecha: Integración Fiscal -->
+                            <div class="col-md-6">
+                                <div class="bg-white p-3 border rounded shadow-sm d-flex align-items-center justify-content-between" style="min-height: 140px; padding-left: 25px !important; padding-right: 25px !important;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; min-width: 60px; background-color: #f6edf5; margin-right: 20px;">
+                                            <i class="fa fa-university" style="font-size: 1.8rem; color: #763b65;"/>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">Integración Fiscal (VE)</h6>
+                                            <p class="text-muted mb-0" style="font-size: 0.8rem; line-height: 1.35;">
+                                                Habilita retenciones IVA/ISLR, proyección de IGTF y generación de Libros Fiscales con montos convertidos a Bolívares.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <field name="l10n_ve_ta_multicurrency_enable_fiscal" widget="boolean_toggle"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </block>
+
+                    <!-- GUIA DE CONFIGURACION BIMONETARIA -->
+                    <block title="Guía de Configuración Bimonetaria" name="l10n_ve_ta_multicurrency_guide">
+                        
+                        <div class="alert alert-info w-100 shadow-none mb-3 px-3 py-2 ms-3 me-3" role="alert" style="border-left: 4px solid #0dcaf0; background-color: #f0fafd; border-color: transparent;">
+                            <p class="mb-0 text-dark" style="font-size: 0.85rem; line-height: 1.45;">
+                                <i class="fa fa-info-circle me-1" style="color: #0dcaf0;"/> 
+                                <strong>Nota Importante de Configuración:</strong> Los cambios se guardan únicamente al presionar el botón morado <strong>Guardar</strong> en la esquina superior izquierda. Para sincronizar la tasa de forma inmediata sin ir al menú superior, utilice el botón <strong>Sincronizar Ahora</strong>.
+                            </p>
+                        </div>
+                        
+                        <div class="alert alert-warning w-100 shadow-none mb-3 px-3 py-2 ms-3 me-3" role="alert" style="border-left: 4px solid #ffc107; background-color: #fff9e6; border-color: transparent;">
+                            <h6 class="alert-heading fw-bold mb-1 text-dark" style="font-size: 0.9rem;">
+                                <i class="fa fa-info-circle me-1" style="color: #ffc107;"/> 
+                                Importante
+                            </h6>
+                            <p class="mb-0 text-dark" style="font-size: 0.85rem; line-height: 1.45;">
+                                La configuración de <strong>Multiplicar/Dividir</strong> y la selección de la <strong>Moneda Referencial</strong> ahora se hacen desde el menú de <strong>Monedas</strong>. Busque la moneda y aplique la configuración correcta:
+                            </p>
+                        </div>
+
+                        <div class="row g-3 w-100 px-3 mt-1">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded shadow-sm h-100" style="background: #f0f4ff; border-left: 4px solid #0d6efd;">
+                                    <h6 class="fw-bold text-primary mb-2"><i class="fa fa-university me-2"/>Contabilidad en Bolívares (VES)</h6>
+                                    <p class="text-muted small mb-2">Empresa que lleva contabilidad en VES y desea ver reportes gerenciales en USD.</p>
+                                    <ul class="list-unstyled small mb-0">
+                                        <li><i class="fa fa-check text-success me-1"/> <b>Operación:</b> Dividir (en la Moneda)</li>
+                                        <li><i class="fa fa-check text-success me-1"/> <b>Reporte en:</b> USD</li>
+                                        <li><i class="fa fa-info-circle text-info me-1"/> Facturas USD × tasa = VES</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded shadow-sm h-100" style="background: #f5f0ff; border-left: 4px solid #6f42c1;">
+                                    <h6 class="fw-bold mb-2" style="color:#6f42c1;"><i class="fa fa-dollar me-2"/>Contabilidad en Dólares (USD)</h6>
+                                    <p class="text-muted small mb-2">Empresa que opera en USD y debe cumplir reportes fiscales SENIAT en VES.</p>
+                                    <ul class="list-unstyled small mb-0">
+                                        <li><i class="fa fa-check text-success me-1"/> <b>Operación:</b> Multiplicar (en la Moneda)</li>
+                                        <li><i class="fa fa-check text-success me-1"/> <b>Reporte en:</b> VES</li>
+                                        <li><i class="fa fa-info-circle text-info me-1"/> Facturas VES ÷ tasa = USD</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </block>
+
+                    <!-- BLOQUE: QUE ACTIVA LA INTEGRACION FISCAL -->
+                    <block title="¿Qué activa la Integración Fiscal?" name="l10n_ve_ta_multicurrency_fiscal_guide">
+                        <div class="w-100 px-3">
+                            <div class="p-3 rounded shadow-sm mb-3" style="background: #fff8e1; border-left: 4px solid #f59f00;">
+                                <h6 class="fw-bold mb-2" style="color:#e67700;"><i class="fa fa-toggle-on me-2"/>Al activar <em>Integración Fiscal (VE)</em>, el sistema habilita:</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled small mb-0">
+                                            <li class="mb-1"><i class="fa fa-check-circle text-success me-1"/> Campos de retención IVA en <b>Bolívares (Bs.)</b> en cada comprobante</li>
+                                            <li class="mb-1"><i class="fa fa-check-circle text-success me-1"/> Campos de retención ISLR en Bs. por línea de retención</li>
+                                            <li class="mb-1"><i class="fa fa-check-circle text-success me-1"/> Proyección del <b>IGTF (3%)</b> en el resumen de facturas</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ul class="list-unstyled small mb-0">
+                                            <li class="mb-1"><i class="fa fa-check-circle text-success me-1"/> Exportación <b>TXT de IVA</b> con montos convertidos a Bs.</li>
+                                            <li class="mb-1"><i class="fa fa-check-circle text-success me-1"/> Exportación <b>XML de ISLR</b> con montos en Bs. para el SENIAT</li>
+                                            <li class="mb-1"><i class="fa fa-check-circle text-success me-1"/> Resumen bimonetario completo en el pie de cada factura</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning p-2 small mb-0" role="alert">
+                                <i class="fa fa-exclamation-triangle me-1"/> <b>Importante:</b> La tasa aplicada se toma del día de la factura. Asegúrese de tener la tasa del BCV sincronizada antes de generar reportes fiscales.
+                            </div>
+                        </div>
+                    </block>
+
+                    <!-- BLOQUE: COMO FUNCIONA LA SINCRONIZACION AUTOMATICA -->
+                    <block title="¿Cómo funciona la Sincronización Automática?" name="l10n_ve_ta_multicurrency_sync_guide">
+                        <div class="w-100 px-3">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 rounded shadow-sm h-100" style="background: #f0fff4; border-top: 3px solid #28a745;">
+                                        <i class="fa fa-clock-o fa-2x text-success mb-2 d-block"/>
+                                        <h6 class="fw-bold text-success mb-1">Tarea Automática</h6>
+                                        <p class="text-muted x-small mb-0">Cada noche el sistema se actualiza en segundo plano con la tasa oficial del BCV.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 rounded shadow-sm h-100" style="background: #e8f4fd; border-top: 3px solid #0d6efd;">
+                                        <i class="fa fa-refresh fa-2x text-primary mb-2 d-block"/>
+                                        <h6 class="fw-bold text-primary mb-1">Actualización Manual</h6>
+                                        <p class="text-muted x-small mb-0">Use el botón "Sincronizar Ahora" para obtener la tasa del día en cualquier momento.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 rounded shadow-sm h-100" style="background: #fff5f5; border-top: 3px solid #dc3545;">
+                                        <i class="fa fa-chain fa-2x text-danger mb-2 d-block"/>
+                                        <h6 class="fw-bold text-danger mb-1">Servicio Externo</h6>
+                                        <p class="text-muted x-small mb-0">Requiere conexión a internet para obtener las tasas. Si el servicio no está disponible, se mantendrá la última tasa guardada.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

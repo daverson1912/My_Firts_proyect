@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_loan_form_inherit_l10n_ve_ta" model="ir.ui.view">
+        <field name="name">account.loan.form.inherit.l10n_ve_ta</field>
+        <field name="model">account.loan</field>
+        <field name="inherit_id" ref="account_loans.account_loan_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_borrowed']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_amount_borrowed_ref" 
+                       string="Loan Ref."
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                       readonly="state != 'draft'"/>
+            </xpath>
+            <xpath expr="//field[@name='outstanding_balance']" position="after">
+                <field name="l10n_ve_ta_multicurrency_outstanding_balance_ref" 
+                       string="Balance Ref."
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+                <label for="l10n_ve_ta_multicurrency_applied_rate"/>
+                <div class="o_row">
+                    <field name="l10n_ve_ta_multicurrency_applied_rate"
+                           readonly="not l10n_ve_ta_multicurrency_use_manual_rate or state != 'draft'"/>
+                    <field name="l10n_ve_ta_multicurrency_use_manual_rate" 
+                           nolabel="1" 
+                           widget="boolean_toggle"
+                           readonly="state != 'draft'"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_loan_tree_inherit_l10n_ve_ta" model="ir.ui.view">
+        <field name="name">account.loan.list.inherit.l10n_ve_ta</field>
+        <field name="model">account.loan</field>
+        <field name="inherit_id" ref="account_loans.account_loan_list_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_borrowed']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_amount_borrowed_ref" 
+                       string="Loan Ref."
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                       sum="Loan Ref."/>
+            </xpath>
+            <xpath expr="//field[@name='outstanding_balance']" position="after">
+                <field name="l10n_ve_ta_multicurrency_outstanding_balance_ref" 
+                       string="Balance Ref."
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                       sum="Balance Ref."/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_loan_line_list_inherit_l10n_ve_ta" model="ir.ui.view">
+        <field name="name">account.loan.line.list.inherit.l10n_ve_ta</field>
+        <field name="model">account.loan.line</field>
+        <field name="inherit_id" ref="account_loans.account_loan_line_list_view"/>
+        <field name="arch" type="xml">
+            <field name="payment" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_payment_ref" 
+                       string="Payment Ref."
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </field>
+        </field>
+    </record>
+</odoo>

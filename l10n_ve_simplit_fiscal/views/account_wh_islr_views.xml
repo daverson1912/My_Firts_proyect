@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- ========== VISTA DE FORMULARIO ========== -->
+    
+    <record id="view_account_wh_islr_form" model="ir.ui.view">
+        <field name="name">account.wh.islr.form</field>
+        <field name="model">account.wh.islr</field>
+        <field name="arch" type="xml">
+            <form string="Comprobante de Retención de ISLR">
+                <header>
+                    <button name="action_process_withholding" 
+                            string="Procesar Retención" 
+                            type="object" 
+                            class="btn-primary"
+                            invisible="state != 'draft'"
+                            groups="account.group_account_manager"/>
+                    <button name="action_print_retention" 
+                            string="Imprimir Comprobante" 
+                            type="object" 
+                            invisible="state == 'draft' or type != 'purchase'"
+                            groups="account.group_account_manager"/>
+                    <button name="action_retry_email" 
+                            string="Reintentar Envío" 
+                            type="object" 
+                            class="btn-secondary"
+                            icon="fa-refresh"
+                            invisible="email_state != 'failed'"
+                            groups="account.group_account_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,posted,declared"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Número de Comprobante" readonly="1"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group name="main_info">
+                            <field name="partner_id" options="{'no_create': True}"/>
+                            <field name="partner_vat"/>
+                            <field name="date"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group name="extra_info">
+                            <field name="company_id" groups="base.group_multi_company" readonly="1"/>
+                            <field name="api_transaction_id" invisible="not api_transaction_id"/>
+                        </group>
+                    </group>
+                    
+                    <group string="DOCUMENTO RELACIONADO">
+                        <group>
+                            <field name="move_id" readonly="1" string="Factura de Compra"/>
+                            <field name="invoice_number"/>
+                        </group>
+                        <group>
+                            <field name="invoice_date"/>
+                            <field name="wh_type"/>
+                        </group>
+                    </group>
+
+                    <group string="RESUMEN DE MONTOS">
+                        <group name="amounts_left">
+                            <field name="amount_total_invoice" string="Monto del Documento"/>
+                            <field name="amount_taxable_base" string="Base Imponible"/>
+                            <field name="amount_exempt" string="Monto Exento"/>
+                        </group>
+                        <group name="amounts_right">
+                            <field name="amount_total_ret" string="Total Retenido" class="oe_subtotal_footer_separator"/>
+                            <field name="amount_to_pay" string="Monto a Pagar" widget="monetary" decoration-bf="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="DETALLE DE RETENCIÓN" name="detail">
+                            <field name="line_ids">
+                                <list edit="0" create="0">
+                                    <field name="product_id"/>
+                                    <field name="move_line_id" string="Ítem Factura" optional="hide"/>
+                                    <field name="concept_id"/>
+                                    <field name="fiscal_code" string="Codigo"/>
+                                    <field name="base_amount" string="Base Imponible" sum="Total Bruto"/>
+                                    <field name="subject_amount_display" string="Base de la retención"/>
+                                    <field name="retention_calculation_display" string="Calc. Imp"/>
+                                    <field name="subtrahend" string="Sustraendo" sum="Total Sustraendo"/>
+                                    <field name="retention_amount" string="Monto Retenido" sum="Total Retenido"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                </list>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="product_id" readonly="1"/>
+                                            <field name="move_line_id" readonly="1"/>
+                                            <field name="concept_id"/>
+                                            <field name="fiscal_code"/>
+                                            <field name="retention_calculation_display"/>
+                                        </group>
+                                        <group>
+                                            <field name="base_amount" string="Base Imponible"/>
+                                            <field name="subject_amount_display"/>
+                                            <field name="subtrahend"/>
+                                            <field name="retention_amount"/>
+                                        </group>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                    
+                    <div class="alert alert-info" role="alert" invisible="state != 'draft'">
+                         <p><strong>ℹ️ Comprobante en Borrador</strong></p>
+                         <p>Este comprobante fue creado automáticamente al confirmar la factura de compra.</p>
+                         <p>Puede procesar su retención haciendo clic en el botón "Procesar Retención".</p>
+                    </div>
+                    <!-- Estado de Correo -->
+                    <group string="Estado de Correo Electrónico" invisible="state == 'draft'">
+                        <group>
+                            <field name="email_state" widget="badge"
+                                   decoration-warning="email_state == 'pending'"
+                                   decoration-success="email_state == 'sent'"
+                                   decoration-danger="email_state == 'failed'"
+                                   decoration-muted="email_state == 'skipped'"/>
+                            <field name="last_email_at" invisible="not last_email_at"/>
+                        </group>
+                        <group>
+                            <field name="email_retry_count" invisible="email_retry_count == 0"/>
+                            <field name="last_email_error" invisible="not last_email_error"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    
+    <!-- ========== VISTA DE LISTA ========== -->
+    
+    <record id="view_account_wh_islr_tree" model="ir.ui.view">
+        <field name="name">account.wh.islr.tree</field>
+        <field name="model">account.wh.islr</field>
+        <field name="arch" type="xml">
+            <list string="Comprobantes de Retención de ISLR">
+                <field name="date" string="Fecha"/>
+                <field name="name" string="Número"/>
+                <field name="invoice_number" string="Nro. Documento"/>
+                <field name="partner_id" string="Proveedor"/>
+                <field name="partner_vat"/>
+                <field name="amount_total_invoice" string="Total Factura" sum="Total Bruto" optional="show"/>
+                <field name="amount_total_ret" string="Monto Retenido" sum="Total Retenido"/>
+                <field name="amount_to_pay" string="Total a Pagar" sum="Total Neto" optional="show"/>
+                <field name="email_state" string="Correo" widget="badge" 
+                       decoration-warning="email_state == 'pending'" 
+                       decoration-success="email_state == 'sent'"
+                       decoration-danger="email_state == 'failed'"
+                       optional="show"/>
+                <field name="state" widget="badge" 
+                       decoration-info="state == 'draft'" 
+                       decoration-success="state == 'posted'"
+                       decoration-primary="state == 'declared'"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- ========== VISTA DE BÚSQUEDA ========== -->
+    
+    <record id="view_account_wh_islr_search" model="ir.ui.view">
+        <field name="name">account.wh.islr.search</field>
+        <field name="model">account.wh.islr</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Comprobantes ISLR">
+                <field name="name" string="Número"/>
+                <field name="partner_id" string="Proveedor"/>
+                <field name="move_id" string="Factura"/>
+                <filter name="state_draft" string="Borrador" domain="[('state', '=', 'draft')]"/>
+                <filter name="state_posted" string="Publicado" domain="[('state', '=', 'posted')]"/>
+                <filter name="state_declared" string="Declarado" domain="[('state', '=', 'declared')]"/>
+                <separator/>
+                <filter name="email_pending" 
+                        string="Correo Pendiente" 
+                        domain="[('email_state', '=', 'pending')]"/>
+                <filter name="email_sent" 
+                        string="Correo Enviado" 
+                        domain="[('email_state', '=', 'sent')]"/>
+                <filter name="email_failed" 
+                        string="Correo Fallido" 
+                        domain="[('email_state', '=', 'failed')]"/>
+                <separator/>
+                <group expand="0" string="Agrupar Por">
+                    <filter name="group_partner" string="Proveedor" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ========== RESUMEN DE COMPROBANTES (SQL VIEW) ========== -->
+
+    <record id="view_account_wh_islr_summary_tree" model="ir.ui.view">
+        <field name="name">account.wh.islr.summary.tree</field>
+        <field name="model">account.wh.islr.summary</field>
+        <field name="arch" type="xml">
+            <list string="Comprobantes de Retención ISLR" create="false" edit="false" delete="false">
+                <field name="name" string="Comprobante"/>
+                <field name="date" string="Fecha"/>
+                <field name="partner_id" string="Proveedor"/>
+                <field name="amount_total_invoice" string="Monto Documento" sum="Total Bruto"/>
+                <field name="amount_total_ret" string="Monto Retenido" sum="Total Retenido"/>
+                <field name="amount_to_pay" string="Total a Pagar" sum="Total Neto"/>
+                <field name="state" widget="badge" 
+                       decoration-success="state == 'posted'" 
+                       decoration-info="state == 'declared'"/>
+                <field name="currency_id" column_invisible="1"/>
+                <button name="action_print_retention" string="Imprimir" type="object" icon="fa-print"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_account_wh_islr_summary_form" model="ir.ui.view">
+        <field name="name">account.wh.islr.summary.form</field>
+        <field name="model">account.wh.islr.summary</field>
+        <field name="arch" type="xml">
+            <form string="Comprobante de Retención ISLR" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_requeue_email" string="Reenviar por Correo" type="object" class="oe_highlight" icon="fa-envelope"/>
+                    <button name="action_print_retention" string="Imprimir Reporte" type="object" icon="fa-print"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="amount_total_invoice" widget="monetary" string="Monto del Documento"/>
+                            <field name="amount_taxable_base" widget="monetary" string="Base Imponible Total"/>
+                            <field name="amount_exempt" widget="monetary" string="Monto Exento Total"/>
+                            <field name="amount_total_ret" widget="monetary" string="Total Retenido"/>
+                            <field name="amount_to_pay" widget="monetary" string="Monto Neto a Pagar" class="oe_subtotal_footer_separator"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Facturas Consolidadas">
+                            <field name="line_ids">
+                                <list string="Documentos" create="false" edit="false" delete="false">
+                                    <field name="move_id" string="Factura de Origen"/>
+                                    <field name="invoice_number" string="Número"/>
+                                    <field name="invoice_date" string="Fecha"/>
+                                    <field name="amount_total_ret" sum="Total"/>
+                                    <field name="state" widget="badge" 
+                                           decoration-success="state == 'posted'" 
+                                           decoration-info="state == 'declared'"
+                                           decoration-warning="state == 'draft'"
+                                           decoration-danger="state == 'cancel'"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Detalle de Retención" name="retention_lines_detail">
+                            <field name="detail_line_ids">
+                                <list string="Detalle de Ítems" create="false" edit="false" delete="false">
+                                    <field name="invoice_number" string="Factura"/>
+                                    <field name="concept_id" string="Concepto"/>
+                                    <field name="product_id" string="Producto"/>
+                                    <field name="base_amount" string="Base de Retención" sum="Total Base"/>
+                                    <field name="subject_amount_display" string="Monto Sujeto"/>
+                                    <field name="retention_calculation_display" string="Impuesto Retenido"/>
+                                    <field name="subtrahend" string="Sustraendo" sum="Total Sustraendo"/>
+                                    <field name="retention_amount" string="Retención Neta" sum="Total Retención"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_account_wh_islr_summary_search" model="ir.ui.view">
+        <field name="name">account.wh.islr.summary.search</field>
+        <field name="model">account.wh.islr.summary</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Comprobantes ISLR">
+                <field name="name" string="Número"/>
+                <field name="partner_id" string="Proveedor"/>
+                <group expand="0" string="Agrupar Por">
+                    <filter name="group_partner" string="Proveedor" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_account_wh_islr_summary_grouped" model="ir.actions.act_window">
+        <field name="name">Comprobantes de Retención ISLR</field>
+        <field name="res_model">account.wh.islr.summary</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_account_wh_islr_summary_tree"/>
+        <field name="search_view_id" ref="view_account_wh_islr_summary_search"/>
+        <field name="domain">[('type', '=', 'purchase')]</field>
+        <field name="context">{'default_type': 'purchase'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay comprobantes de retención de ISLR para mostrar
+            </p>
+        </field>
+    </record>
+
+</odoo>

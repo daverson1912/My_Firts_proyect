@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_tafel_provider_setup_wizard_form" model="ir.ui.view">
+        <field name="name">tafel.provider.setup.wizard.form</field>
+        <field name="model">tafel.provider.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Configurar Proveedor de Facturación">
+                <group string="Proveedor">
+                    <div class="alert alert-warning" role="alert"
+                         invisible="provider_option_ids">
+                        No se encontraron proveedores disponibles para su país.
+                        Verifique la URL de la API en Ajustes.
+                    </div>
+                    <field name="selected_provider_option_id"
+                           invisible="not provider_option_ids"
+                           options="{'no_create': True, 'no_open': True}"/>
+                </group>
+                <group string="Credenciales del Proveedor"
+                       invisible="not selected_provider_option_id">
+                    <field name="credential_usuario"
+                           required="selected_provider_option_id"/>
+                    <field name="credential_clave" password="True"
+                           required="selected_provider_option_id"/>
+                    <field name="credential_is_qa"/>
+                </group>
+                <footer>
+                    <button name="action_save" type="object"
+                            string="Guardar y Vincular" class="btn-primary"
+                            invisible="not selected_provider_option_id"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tafel_provider_setup_wizard" model="ir.actions.act_window">
+        <field name="name">Configurar Proveedor</field>
+        <field name="res_model">tafel.provider.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

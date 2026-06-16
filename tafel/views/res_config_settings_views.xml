@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_tafel" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.tafel</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Facturación Electrónica"
+                     string="Facturación Electrónica"
+                     name="tafel"
+                     groups="tafel.group_tafel_manager">
+                    <block title="Conexión con la API" name="tafel_api_settings_container">
+                        <setting string="URL base de la API"
+                                 help="Dirección del servidor Tafel. Ejemplo: http://localhost:3000">
+                            <field name="tafel_api_base_url"
+                                   required="1"
+                                   placeholder="http://localhost:3000"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

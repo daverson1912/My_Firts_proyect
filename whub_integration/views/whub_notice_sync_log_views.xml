@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Acción contextual para consultar por fechas -->
+    <record id="action_whub_notice_sync_log_dates" model="ir.actions.server">
+        <field name="name">Consultar por Fechas</field>
+        <field name="model_id" ref="model_whub_notice_sync_log"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = {
+                'type': 'ir.actions.act_window',
+                'res_model': 'whub.notice.sync.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {},
+            }
+        </field>
+    </record>
+
+    <!-- Vista Árbol (Lista) del Log de Avisos -->
+    <record id="view_whub_notice_sync_log_tree" model="ir.ui.view">
+        <field name="name">whub.notice.sync.log.tree</field>
+        <field name="model">whub.notice.sync.log</field>
+        <field name="arch" type="xml">
+            <list string="Log de Avisos de Cobro" 
+                  decoration-success="state == 'success'" 
+                  decoration-danger="state in ('error_mapping', 'error_connection', 'error_other')"
+                  create="false" edit="false">
+                <header>
+                    <button name="action_open_date_wizard" string="Consultar por Fechas" type="object"
+                            class="btn-primary"/>
+                </header>
+                <field name="sync_date"/>
+                <field name="whub_invoice_id"/>
+                <field name="customer_name_wh"/>
+                <field name="partner_id"/>
+                <field name="state"/>
+                <field name="error_message"/>
+                <field name="sale_order_id" widget="many2one_button"/>
+                <button name="action_reprocess" string="Re-procesar" type="object" 
+                        icon="fa-refresh" invisible="not can_reprocess"
+                        class="btn-primary"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Vista Formulario del Log -->
+    <record id="view_whub_notice_sync_log_form" model="ir.ui.view">
+        <field name="name">whub.notice.sync.log.form</field>
+        <field name="model">whub.notice.sync.log</field>
+        <field name="arch" type="xml">
+            <form string="Detalle de Sincronización" create="false" edit="false">
+                <header>
+                    <button name="action_reprocess" string="Re-procesar" type="object" 
+                            class="oe_highlight" invisible="not can_reprocess"/>
+                    <button name="action_open_homologation" string="Corregir Mapeo" type="object" 
+                            class="btn-secondary" invisible="state != 'error_mapping'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_sale_order" type="object" class="oe_stat_button" 
+                                icon="fa-shopping-cart" invisible="not sale_order_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Orden de Venta</span>
+                            </div>
+                        </button>
+                        <button name="action_view_invoice" type="object" class="oe_stat_button" 
+                                icon="fa-pencil-square-o" invisible="not invoice_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Factura Fiscal</span>
+                            </div>
+                        </button>
+                    </div>
+                    <group>
+                        <group string="Identificación">
+                            <field name="whub_invoice_id"/>
+                            <field name="sync_date"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Cliente Relacionado">
+                            <field name="customer_name_wh"/>
+                            <field name="partner_id"/>
+                        </group>
+                    </group>
+                    <group string="Resultado del Proceso" invisible="state == 'success'">
+                        <field name="error_message" readonly="1"/>
+                        <field name="missing_entity" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Información Técnica">
+                            <field name="raw_json" readonly="1" class="font-monospace"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Acción para abrir el log de avisos -->
+    <record id="action_whub_notice_sync_log" model="ir.actions.act_window">
+        <field name="name">Log de Sincronización de Avisos</field>
+        <field name="res_model">whub.notice.sync.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aquí aparecerán los resultados de la sincronización de avisos de cobro.
+            </p>
+        </field>
+    </record>
+</odoo>

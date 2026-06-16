@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_tafel_custom_field_list" model="ir.ui.view">
+        <field name="name">tafel.custom.field.list</field>
+        <field name="model">tafel.custom.field</field>
+        <field name="arch" type="xml">
+            <list string="Información Adicional">
+                <field name="sequence" widget="handle"/>
+                <field name="name" string="Campo"/>
+                <field name="source_model" string="Contexto" widget="badge"
+                       decoration-info="source_model == 'move'"
+                       decoration-warning="source_model == 'line'"/>
+                <field name="value_type" string="Tipo" widget="badge"
+                       decoration-success="value_type == 'manual'"
+                       decoration-info="value_type == 'auto'"
+                       decoration-warning="value_type == 'template'"/>
+                <field name="odoo_expr" string="Expresión Odoo" optional="show"/>
+                <field name="default_value" string="Valor Manual" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tafel_custom_field_form" model="ir.ui.view">
+        <field name="name">tafel.custom.field.form</field>
+        <field name="model">tafel.custom.field</field>
+        <field name="arch" type="xml">
+            <form string="Información Adicional">
+                <sheet>
+                    <group>
+                        <group string="Identificación">
+                            <field name="name" string="Nombre del Campo"/>
+                            <field name="source_model"/>
+                            <field name="value_type"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group string="Valor Automatizado"
+                               invisible="value_type != 'auto'">
+                            <field name="source_model_technical" invisible="1"/>
+                            <field name="odoo_field_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="odoo_related_field_id"
+                                   invisible="not odoo_field_relation"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="odoo_expr" string="Expresión resultante"
+                                   help="Puede editar manualmente para expresiones de 3+ niveles."/>
+                        </group>
+                        <group string="Valor Manual"
+                               invisible="value_type != 'manual'">
+                            <field name="default_value" string="Valor"
+                                   help="Texto que se enviará tal cual en el campo."/>
+                        </group>
+                        <group string="Plantilla"
+                               invisible="value_type != 'template'">
+                            <field name="template_text" nolabel="1" widget="text"
+                                   placeholder="Texto con &lt;&lt;campo&gt;&gt; o &lt;&lt;campo:formato&gt;&gt;&#10;Ej: Tasa &lt;&lt;currency_rate:.4f&gt;&gt; Fecha &lt;&lt;invoice_date:%d/%m/%Y&gt;&gt;&#10;&#10;O JSON: {&quot;campo1&quot;: &quot;&lt;&lt;currency_rate&gt;&gt;&quot;}"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_tafel_custom_field_search" model="ir.ui.view">
+        <field name="name">tafel.custom.field.search</field>
+        <field name="model">tafel.custom.field</field>
+        <field name="arch" type="xml">
+            <search string="Información Adicional">
+                <field name="name" string="Campo"/>
+                <separator/>
+                <filter name="filter_move" string="Factura"
+                        domain="[('source_model', '=', 'move')]"/>
+                <filter name="filter_line" string="Línea de Factura"
+                        domain="[('source_model', '=', 'line')]"/>
+                <separator/>
+                <filter name="filter_manual" string="Manual"
+                        domain="[('value_type', '=', 'manual')]"/>
+                <filter name="filter_auto" string="Automatizado"
+                        domain="[('value_type', '=', 'auto')]"/>
+                <filter name="filter_template" string="Plantilla"
+                        domain="[('value_type', '=', 'template')]"/>
+                <group expand="1" string="Agrupar por">
+                    <filter name="group_source" string="Contexto"
+                            context="{'group_by': 'source_model'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>

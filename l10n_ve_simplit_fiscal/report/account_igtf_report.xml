@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Formato de Papel para Reportes IGTF (Venezuela) -->
+    <record id="paperformat_ve_igtf" model="report.paperformat">
+        <field name="name">VE IGTF Paperformat</field>
+        <field name="default" eval="True" />
+        <field name="format">Letter</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">15</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False" />
+        <field name="header_spacing">10</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_igtf_general" model="ir.actions.report">
+        <field name="name">Reporte IGTF General</field>
+        <field name="model">account.igtf.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_ve_simplit_fiscal.report_igtf_general</field>
+        <field name="report_file">l10n_ve_simplit_fiscal.report_igtf_general</field>
+        <field name="print_report_name">'Reporte_IGTF_%s' % object.id</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="paperformat_id" ref="paperformat_ve_igtf"/>
+    </record>
+</odoo>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_tafel_config_form" model="ir.ui.view">
+        <field name="name">tafel.config.form</field>
+        <field name="model">tafel.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuración — Facturación Electrónica">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_transactions"
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="not fiscal_document_count">
+                            <field name="fiscal_document_count" widget="statinfo"
+                                   string="Transacciones"/>
+                        </button>
+                        <button type="object" name="action_view_errors"
+                                class="oe_stat_button" icon="fa-exclamation-triangle"
+                                invisible="not fiscal_document_error_count">
+                            <field name="fiscal_document_error_count" widget="statinfo"
+                                   string="Errores"/>
+                        </button>
+                        <button type="object" name="action_field_mapping"
+                                class="oe_stat_button" icon="fa-random"
+                                invisible="not field_map_count">
+                            <field name="field_map_count" widget="statinfo"
+                                   string="Campos Mapeados"/>
+                        </button>
+                        <button type="object" name="action_additional_info"
+                                class="oe_stat_button" icon="fa-list-alt"
+                                invisible="not provider_config_id">
+                            <field name="custom_field_count" widget="statinfo"
+                                   string="Info. Adicional"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="company_name" readonly="1"/></h1>
+                        <h4 class="text-muted">
+                            <field name="tax_id" readonly="1"/>
+                        </h4>
+                    </div>
+                    <notebook>
+                        <page string="Configuración" name="config">
+                            <group>
+                                <group string="Datos de la Empresa">
+                                    <field name="company_id" options="{'no_create': True}"/>
+                                    <field name="company_name"/>
+                                    <field name="email"/>
+                                    <field name="tax_id"/>
+                                    <field name="country_code"/>
+                                </group>
+                                <group string="Acceso">
+                                    <field name="password" password="True"
+                                           groups="tafel.group_tafel_manager"/>
+                                    <field name="api_key_short" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="Información de la Cuenta">
+                                <field name="tenant_id_short" readonly="1"/>
+                                <field name="registration_date" readonly="1"
+                                       options='{"format": "MM/dd/yyyy HH:mm"}'/>
+                            </group>
+                            <separator string="Proveedor de Facturación"/>
+                            <div class="px-3 pb-3" invisible="provider_config_id">
+                                <span class="text-muted">No hay proveedor de facturación configurado.</span>
+                                <div class="mt-2">
+                                    <button name="action_configure_provider" type="object"
+                                            string="Configurar Proveedor" class="btn-primary"/>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 px-3 pb-2"
+                                 invisible="not provider_config_id">
+                                <field name="provider_config_id" readonly="1" nolabel="1"
+                                       options="{'no_create': True, 'no_open': True}"
+                                       class="fw-bold mb-0"/>
+                                <field name="provider_is_qa" readonly="1" nolabel="1"
+                                       widget="boolean_toggle"/>
+                                <span class="text-muted small">QA</span>
+                                <div class="ms-auto d-flex gap-2">
+                                    <button name="action_edit_provider" type="object"
+                                            string="Configurar" class="btn-sm btn-secondary"/>
+                                    <button name="action_field_mapping" type="object"
+                                            string="Mapeo de Campos" class="btn-sm btn-secondary"/>
+                                    <button name="action_additional_info" type="object"
+                                            string="Info. Adicional" class="btn-sm btn-secondary"/>
+                                </div>
+                            </div>
+                        </page>
+                        <page string="Transacciones" name="transactions">
+                            <div class="d-flex justify-content-end mb-2">
+                                <button name="action_refresh" type="object"
+                                        string="Actualizar" icon="fa-refresh"
+                                        class="btn btn-secondary btn-sm"/>
+                            </div>
+                            <div class="alert alert-warning mb-3" role="alert"
+                                 invisible="not has_transmission_errors">
+                                <strong>Transmisión automática pausada</strong>
+                                <p class="mb-0 mt-1">
+                                    Existen transacciones con error que requieren atención.
+                                    El sistema no procesará nuevas transmisiones de forma automática
+                                    hasta que los errores sean resueltos o marcados como deshabilitados.
+                                </p>
+                            </div>
+                            <field name="fiscal_document_ids" readonly="1">
+                                <list string="Documentos Fiscales"
+                                      decoration-muted="disabled">
+                                    <field name="transmission_date" string="Fecha"/>
+                                    <field name="partner_name" string="Cliente"/>
+                                    <field name="move_id" string="Factura"
+                                           options="{'no_open': False}"
+                                           optional="show"/>
+                                    <field name="amount_total" string="Monto"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="disabled" column_invisible="1"/>
+                                    <field name="status" string="Estatus"
+                                           widget="badge"
+                                           decoration-success="status == 'success'"
+                                           decoration-danger="status == 'error'"
+                                           decoration-warning="status == 'pending'"/>
+                                    <field name="status_message" string="Mensaje"/>
+                                    <button name="action_retry" type="object"
+                                            string="Reenviar" icon="fa-refresh"
+                                            invisible="status != 'error' or disabled"/>
+                                    <button name="action_download_pdf" type="object"
+                                            string="Ver Documento" icon="fa-external-link"
+                                            invisible="not pdf_url"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tafel_config" model="ir.actions.act_window">
+        <field name="name">Configuración</field>
+        <field name="res_model">tafel.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Vista de Formulario del Wizard -->
+    <record id="view_simplitfiscal_sequence_wizard_form" model="ir.ui.view">
+        <field name="name">simplitfiscal.sequence.wizard.form</field>
+        <field name="model">simplitfiscal.sequence.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Configurar Correlativo de Retenciones">
+                
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="config_id" invisible="1"/>
+                            
+                            <label for="current_sequence" class="oe_edit_only"/>
+                            <h2>
+                                <field name="current_sequence" readonly="1" 
+                                       class="oe_inline" 
+                                       style="font-family: monospace; color: #875A7B;"/>
+                            </h2>
+                            
+                            <field name="sequence_number" 
+                                   placeholder="Ingrese el número secuencial..."/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Información" name="info">
+                            <group>
+                                <group string="Formato Legal">
+                                    <p style="color: #555;">
+                                        El correlativo debe tener <strong>14 dígitos</strong> continuos:
+                                    </p>
+                                    <ul>
+                                        <li><strong>AAAA</strong>: Año del período (calculado automáticamente)</li>
+                                        <li><strong>MM</strong>: Mes del período (calculado automáticamente)</li>
+                                        <li><strong>SSSSSSSS</strong>: Número secuencial de 8 dígitos (editable)</li>
+                                    </ul>
+                                </group>
+                                
+                                <group string="Ejemplo">
+                                    <p style="font-family: monospace; font-size: 14px;">
+                                        <strong>20260100000001</strong>
+                                    </p>
+                                    <ul style="color: #666;">
+                                        <li>2026 = Año</li>
+                                        <li>01 = Enero</li>
+                                        <li>00000001 = Primer comprobante</li>
+                                    </ul>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <footer>
+                    <button name="action_save_sequence" 
+                            string="Guardar" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button name="action_reset_sequence" 
+                            string="Iniciar de Cero" 
+                            type="object" 
+                            class="btn-secondary"
+                            confirm="¿Está seguro que desea resetear el correlativo a 1?"/>
+                    <button string="Cancelar" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+                
+            </form>
+        </field>
+    </record>
+    
+</odoo>

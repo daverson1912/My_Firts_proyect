@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_tafel_config_manager,tafel.config manager,model_tafel_config,tafel.group_tafel_manager,1,1,1,1
+access_tafel_setup_wizard_manager,tafel.setup.wizard manager,model_tafel_setup_wizard,tafel.group_tafel_manager,1,1,1,1
+access_tafel_provider_option_manager,tafel.provider.option manager,model_tafel_provider_option,tafel.group_tafel_manager,1,1,1,1
+access_tafel_provider_config_manager,tafel.provider.config manager,model_tafel_provider_config,tafel.group_tafel_manager,1,1,1,1
+access_tafel_payment_method_map_manager,tafel.payment.method.map manager,model_tafel_payment_method_map,tafel.group_tafel_manager,1,1,1,1
+access_tafel_provider_setup_wizard_manager,tafel.provider.setup.wizard manager,model_tafel_provider_setup_wizard,tafel.group_tafel_manager,1,1,1,1
+access_tafel_provider_payment_method_manager,tafel.provider.payment.method manager,model_tafel_provider_payment_method,tafel.group_tafel_manager,1,1,1,1
+access_tafel_journal_config_manager,tafel.journal.config manager,model_tafel_journal_config,tafel.group_tafel_manager,1,1,1,1
+access_tafel_field_map_manager,tafel.field.map manager,model_tafel_field_map,tafel.group_tafel_manager,1,1,1,1
+access_tafel_custom_field_manager,tafel.custom.field manager,model_tafel_custom_field,tafel.group_tafel_manager,1,1,1,1
+access_tafel_fiscal_document_manager,tafel.fiscal.document manager,model_tafel_fiscal_document,tafel.group_tafel_manager,1,1,1,1
+access_tafel_fiscal_document_attempt_manager,tafel.fiscal.document.attempt manager,model_tafel_fiscal_document_attempt,tafel.group_tafel_manager,1,1,1,1
+access_tafel_fiscal_document_user,tafel.fiscal.document user,model_tafel_fiscal_document,tafel.group_tafel_user,1,1,1,1
+access_tafel_fiscal_document_attempt_user,tafel.fiscal.document.attempt user,model_tafel_fiscal_document_attempt,tafel.group_tafel_user,1,1,1,1

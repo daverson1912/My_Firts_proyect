@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_tafel_fiscal_document_form" model="ir.ui.view">
+        <field name="name">tafel.fiscal.document.form</field>
+        <field name="model">tafel.fiscal.document</field>
+        <field name="arch" type="xml">
+            <form string="Documento Fiscal">
+                <sheet>
+                    <!-- Estatus prominente al tope -->
+                    <div class="alert alert-success mb-3" role="alert"
+                         invisible="status != 'success'">
+                        <strong>✓ Emitido correctamente</strong>
+                        <span invisible="not fiscal_id"> — ID Fiscal:
+                            <field name="fiscal_id" readonly="1" nolabel="1" class="fw-bold"/>
+                        </span>
+                    </div>
+                    <div class="alert alert-danger mb-3" role="alert"
+                         invisible="status != 'error'">
+                        <strong>✗ Error en la transmisión</strong>
+                    </div>
+                    <div class="alert alert-warning mb-3" role="alert"
+                         invisible="status != 'pending'">
+                        <strong>⏳ Pendiente de transmisión</strong>
+                    </div>
+
+                    <group>
+                        <group string="Factura">
+                            <field name="move_id" readonly="1"/>
+                            <field name="partner_name" readonly="1"/>
+                            <field name="amount_total" readonly="1"/>
+                            <field name="currency_id" readonly="1" invisible="1"/>
+                            <field name="transmission_date" readonly="1"/>
+                        </group>
+                        <group string="Resultado">
+                            <field name="status" readonly="1" widget="badge"
+                                   decoration-success="status == 'success'"
+                                   decoration-danger="status == 'error'"
+                                   decoration-warning="status == 'pending'"/>
+                            <field name="document_number" readonly="1"
+                                   invisible="not document_number"/>
+                            <field name="attempt_count" readonly="1" string="Total de intentos"/>
+                            <field name="pdf_url" readonly="1" invisible="1"/>
+                            <button name="action_download_pdf" type="object"
+                                    string="Ver Documento Digital"
+                                    class="btn btn-link p-0"
+                                    icon="fa-external-link"
+                                    invisible="not pdf_url"/>
+                        </group>
+                    </group>
+
+                    <group string="Mensaje" invisible="not status_message">
+                        <field name="status_message" nolabel="1" readonly="1"/>
+                    </group>
+
+                    <group string="Datos del Documento Fiscal" invisible="not fiscal_data_json">
+                        <field name="fiscal_data_json" nolabel="1" readonly="1"
+                               widget="text"
+                               style="font-family: monospace; font-size: 12px;"/>
+                    </group>
+
+                    <group string="Payload Enviado" invisible="not payload_json"
+                           groups="tafel.group_tafel_manager">
+                        <field name="payload_json" nolabel="1" readonly="1"
+                               widget="text"
+                               style="font-family: monospace; font-size: 12px;"/>
+                    </group>
+
+                    <separator string="Historial de Intentos"/>
+                    <field name="attempt_ids" readonly="1">
+                        <list string="Intentos"
+                              decoration-success="status == 'success'"
+                              decoration-danger="status == 'error'">
+                            <field name="attempt_date" string="Fecha"/>
+                            <field name="status" string="Resultado" widget="badge"
+                                   decoration-success="status == 'success'"
+                                   decoration-danger="status == 'error'"/>
+                            <field name="status_message" string="Mensaje"/>
+                            <field name="response_json" string="Respuesta" optional="hide"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="action_retry" type="object"
+                            string="Reenviar" class="btn-primary"
+                            invisible="status == 'success' or disabled"/>
+                    <button name="action_disable" type="object"
+                            string="Deshabilitar" class="btn-secondary"
+                            invisible="status != 'error' or disabled"/>
+                    <button name="action_enable" type="object"
+                            string="Habilitar" class="btn-secondary"
+                            invisible="not disabled"/>
+                    <button name="action_download_payload" type="object"
+                            string="Descargar Payload" class="btn-secondary"
+                            groups="tafel.group_tafel_manager"
+                            invisible="not payload_json"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="action_tafel_fiscal_document_menu" model="ir.actions.act_window">
+        <field name="name">Transacciones</field>
+        <field name="res_model">tafel.fiscal.document</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

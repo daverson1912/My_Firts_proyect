@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <!-- Generic template for most reports -->
+    <t t-inherit="account_reports.AccountReportFiltersCustomizable" t-inherit-mode="extension" t-name="l10n_ve_ta_multicurrency.AccountReportFiltersCustomizableMulticurrency">
+        <xpath expr="//div[@id='filter_date']" position="before">
+            <t t-if="controller.options.available_multicurrency_currencies and controller.options.available_multicurrency_currencies.length > 0">
+                <div id="filter_multicurrency_currency" class="filter_multicurrency_currency me-2">
+                    <Dropdown>
+                        <button class="btn btn-secondary">
+                            <i class="fa fa-money me-1"/>
+                            <t t-if="controller.options.available_multicurrency_currencies and controller.options.multicurrency_currency_id">
+                                <t t-foreach="controller.options.available_multicurrency_currencies" t-as="c" t-key="c.id">
+                                    <t t-if="c.id == controller.options.multicurrency_currency_id">
+                                        <span><t t-esc="c.name"/></span>
+                                    </t>
+                                </t>
+                            </t>
+                            <t t-else="">
+                                <span><t t-esc="controller.options.multicurrency_base_currency_name or 'USD'"/></span>
+                            </t>
+                        </button>
+                        <t t-set-slot="content">
+                            <DropdownItem
+                                class="{ 'selected': !controller.options.multicurrency_currency_id }"
+                                onSelected="() => this.filterClicked({ optionKey: 'multicurrency_currency_id', optionValue: false, reload: true})"
+                            >
+                                <span><t t-esc="controller.options.multicurrency_base_currency_name or 'USD'"/></span>
+                            </DropdownItem>
+                            
+                            <t t-if="controller.options.available_multicurrency_currencies">
+                                <t t-foreach="controller.options.available_multicurrency_currencies" t-as="c" t-key="c.id">
+                                    <DropdownItem
+                                        class="{ 'selected': controller.options.multicurrency_currency_id == c.id }"
+                                        onSelected="() => this.filterClicked({ optionKey: 'multicurrency_currency_id', optionValue: c.id, reload: true})"
+                                    >
+                                        <t t-esc="c.name"/>
+                                    </DropdownItem>
+                                </t>
+                            </t>
+                        </t>
+                    </Dropdown>
+                </div>
+            </t>
+        </xpath>
+    </t>
+
+    <!-- Specific template for Journal Audit -->
+    <t t-inherit="account_reports.JournalReportFilters" t-inherit-mode="extension" t-name="l10n_ve_ta_multicurrency.JournalReportFiltersMulticurrency">
+        <xpath expr="." position="inside">
+            <t t-if="controller.options.available_multicurrency_currencies and controller.options.available_multicurrency_currencies.length > 0">
+                <div id="filter_multicurrency_currency_journal" class="filter_multicurrency_currency ms-2">
+                    <Dropdown>
+                        <button class="btn btn-secondary">
+                            <i class="fa fa-money me-1"/>
+                            <t t-if="controller.options.available_multicurrency_currencies and controller.options.multicurrency_currency_id">
+                                <t t-foreach="controller.options.available_multicurrency_currencies" t-as="c" t-key="c.id">
+                                    <t t-if="c.id == controller.options.multicurrency_currency_id">
+                                        <span><t t-esc="c.name"/></span>
+                                    </t>
+                                </t>
+                            </t>
+                            <t t-else="">
+                                <span><t t-esc="controller.options.multicurrency_base_currency_name or 'USD'"/></span>
+                            </t>
+                        </button>
+                        <t t-set-slot="content">
+                            <DropdownItem
+                                class="{ 'selected': !controller.options.multicurrency_currency_id }"
+                                onSelected="() => this.filterClicked({ optionKey: 'multicurrency_currency_id', optionValue: false, reload: true})"
+                            >
+                                <span><t t-esc="controller.options.multicurrency_base_currency_name or 'USD'"/></span>
+                            </DropdownItem>
+                            
+                            <t t-if="controller.options.available_multicurrency_currencies">
+                                <t t-foreach="controller.options.available_multicurrency_currencies" t-as="c" t-key="c.id">
+                                    <DropdownItem
+                                        class="{ 'selected': controller.options.multicurrency_currency_id == c.id }"
+                                        onSelected="() => this.filterClicked({ optionKey: 'multicurrency_currency_id', optionValue: c.id, reload: true})"
+                                    >
+                                        <t t-esc="c.name"/>
+                                    </DropdownItem>
+                                </t>
+                            </t>
+                        </t>
+                    </Dropdown>
+                </div>
+            </t>
+        </xpath>
+    </t>
+
+    <!-- Specific template for Partner Ledger -->
+    <t t-inherit="account_reports.PartnerLedgerFilters" t-inherit-mode="extension" t-name="l10n_ve_ta_multicurrency.PartnerLedgerFiltersMulticurrency">
+        <xpath expr="." position="inside">
+            <t t-if="controller.options.available_multicurrency_currencies and controller.options.available_multicurrency_currencies.length > 0">
+                <div id="filter_multicurrency_currency_partner" class="filter_multicurrency_currency ms-2">
+                    <Dropdown>
+                        <button class="btn btn-secondary">
+                            <i class="fa fa-money me-1"/>
+                            <t t-if="controller.options.available_multicurrency_currencies and controller.options.multicurrency_currency_id">
+                                <t t-foreach="controller.options.available_multicurrency_currencies" t-as="c" t-key="c.id">
+                                    <t t-if="c.id == controller.options.multicurrency_currency_id">
+                                        <span><t t-esc="c.name"/></span>
+                                    </t>
+                                </t>
+                            </t>
+                            <t t-else="">
+                                <span><t t-esc="controller.options.multicurrency_base_currency_name or 'USD'"/></span>
+                            </t>
+                        </button>
+                        <t t-set-slot="content">
+                            <DropdownItem
+                                class="{ 'selected': !controller.options.multicurrency_currency_id }"
+                                onSelected="() => this.filterClicked({ optionKey: 'multicurrency_currency_id', optionValue: false, reload: true})"
+                            >
+                                <span><t t-esc="controller.options.multicurrency_base_currency_name or 'USD'"/></span>
+                            </DropdownItem>
+                            
+                            <t t-if="controller.options.available_multicurrency_currencies">
+                                <t t-foreach="controller.options.available_multicurrency_currencies" t-as="c" t-key="c.id">
+                                    <DropdownItem
+                                        class="{ 'selected': controller.options.multicurrency_currency_id == c.id }"
+                                        onSelected="() => this.filterClicked({ optionKey: 'multicurrency_currency_id', optionValue: c.id, reload: true})"
+                                    >
+                                        <t t-esc="c.name"/>
+                                    </DropdownItem>
+                                </t>
+                            </t>
+                        </t>
+                    </Dropdown>
+                </div>
+            </t>
+        </xpath>
+    </t>
+
+    <!-- Specific template for Aged Partner Balance (Aged Receivable/Payable) -->
+    <t t-inherit="account_reports.AgedPartnerBalanceFilters" t-inherit-mode="extension" t-name="l10n_ve_ta_multicurrency.AgedPartnerBalanceFiltersMulticurrency">
+        <xpath expr="." position="inside">
+            <t t-if="controller.options.available_multicurrency_currencies and controller.options.available_multicurrency_currencies.length > 0">
+                <div id="filter_multicurrency_currency_aged" class="filter_multicurrency_currency ms-2">
+                    <Dropdown>
+                        <button class="btn btn-secondary">
+                            <i class="fa fa-money me-1"/>
+                            <t t-if="controller.options.available_multicurrency_currencies and controller.options.multicurrency_currency_id">
+                                <t t-foreach="controller.options.available_multicurrency_currencies" t-as="c" t-key="c.id">
+                                    <t t-if="c.id == controller.options.multicurrency_currency_id">
+                                        <span><t t-esc="c.name"/></span>
+                                    </t>
+                                </t>
+                            </t>
+                            <t t-else="">
+                                <span><t t-esc="controller.options.multicurrency_base_currency_name or 'USD'"/></span>
+                            </t>
+                        </button>
+                        <t t-set-slot="content">
+                            <DropdownItem
+                                class="{ 'selected': !controller.options.multicurrency_currency_id }"
+                                onSelected="() => this.filterClicked({ optionKey: 'multicurrency_currency_id', optionValue: false, reload: true})"
+                            >
+                                <span><t t-esc="controller.options.multicurrency_base_currency_name or 'USD'"/></span>
+                            </DropdownItem>
+                            
+                            <t t-if="controller.options.available_multicurrency_currencies">
+                                <t t-foreach="controller.options.available_multicurrency_currencies" t-as="c" t-key="c.id">
+                                    <DropdownItem
+                                        class="{ 'selected': controller.options.multicurrency_currency_id == c.id }"
+                                        onSelected="() => this.filterClicked({ optionKey: 'multicurrency_currency_id', optionValue: c.id, reload: true})"
+                                    >
+                                        <t t-esc="c.name"/>
+                                    </DropdownItem>
+                                </t>
+                            </t>
+                        </t>
+                    </Dropdown>
+                </div>
+            </t>
+        </xpath>
+    </t>
+</templates>

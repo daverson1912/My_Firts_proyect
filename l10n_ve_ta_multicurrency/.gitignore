@@ -1,0 +1,6 @@
+# Local API Configuration
+globalConfig.json
+
+# Python bytecode
+__pycache__/
+*.pyc

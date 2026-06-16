@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_wh_iva_form_multicurrency" model="ir.ui.view">
+        <field name="name">account.wh.iva.form.multicurrency</field>
+        <field name="model">account.wh.iva</field>
+        <field name="inherit_id" ref="l10n_ve_simplit_fiscal.view_account_wh_iva_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_base']" position="after">
+                <field name="l10n_ve_ta_multicurrency_amount_base" string="Impuesto Base (IVA) (Ref.)"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+
+            <xpath expr="//field[@name='amount_total_ret']" position="after">
+                <field name="l10n_ve_ta_multicurrency_amount_total_ret" string="Monto Total Retenido (Ref.)"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

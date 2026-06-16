@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vista de Formulario heredada para res.company -->
+        <record id="view_company_form_inherit_simplit_fiscal" model="ir.ui.view">
+            <field name="name">res.company.form.inherit.simplit.fiscal</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='general_info']" position="after">
+                    <page name="l10n_ve_fiscal_config" string="Venezuela Fiscal">
+                        <field name="l10n_ve_fields_visible" invisible="1"/>
+                        <group string="Firma y Sello">
+                            <field name="l10n_ve_agent_signature" widget="image" class="oe_avatar"
+                                   style="max-width: 250px; max-height: 120px;"/>
+                            <p class="text-muted">Cargue aquí el sello húmedo con la firma para los formatos de las retencines.</p>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

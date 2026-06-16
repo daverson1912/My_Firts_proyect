@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- VISTA FORMULARIO DEL WIZARD -->
+    <record id="view_account_wh_islr_xml_export_wizard_form" model="ir.ui.view">
+        <field name="name">account.wh.islr.xml.export.wizard.form</field>
+        <field name="model">account.wh.islr.xml.export.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Exportar XML de ISLR (SENIAT)">
+                <sheet>
+                    <div class="alert alert-info" role="alert" invisible="state != 'draft'">
+                        <p>Se generará el archivo XML para los <strong><field name="wh_islr_ids" widget="statinfo" string="registros" class="oe_inline"/></strong> seleccionados.</p>
+                        <p>Los datos se enviarán al API de Simplit Fiscal para su procesamiento.</p>
+                    </div>
+
+                    <div class="alert alert-success" role="alert" invisible="state != 'done'">
+                        <p><strong>✅ Archivo XML generado exitosamente.</strong></p>
+                        <p>Haga clic en el enlace de abajo para descargar el archivo XML.</p>
+                    </div>
+
+                    <group invisible="state != 'done'">
+                        <field name="xml_filename" invisible="1"/>
+                        <field name="xml_file" filename="xml_filename" readonly="1" string="Descargar Archivo"/>
+                    </group>
+
+                    <group invisible="state != 'done'">
+                        <field name="mark_as_declared" widget="boolean_toggle"/>
+                    </group>
+
+                    <field name="wh_islr_ids" invisible="1"/>
+                    <field name="state" invisible="1"/>
+                </sheet>
+                <footer>
+                    <button name="action_generate_xml" 
+                            string="Generar y Descargar" 
+                            type="object" 
+                            class="btn-primary" 
+                            invisible="state != 'draft'"/>
+                    
+                    <button name="action_confirm_declared" 
+                            string="Confirmar y Cerrar" 
+                            type="object" 
+                            class="btn-primary" 
+                            invisible="state != 'done'"/>
+                    
+                    <button string="Cancelar" class="btn-secondary" special="cancel" invisible="state != 'draft'"/>
+                    <button string="Cerrar sin declarar" class="btn-secondary" special="cancel" invisible="state != 'done'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ACCIÓN DE SERVIDOR PARA EL MENÚ ACCIONES -->
+    <record id="action_generate_islr_xml_seniat" model="ir.actions.server">
+        <field name="name">Generar XML Seniat</field>
+        <field name="model_id" ref="model_account_wh_islr_summary"/>
+        <field name="binding_model_id" ref="model_account_wh_islr_summary"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+action = records.env['account.wh.islr.xml.export.wizard'].create({
+    'wh_islr_ids': [(6, 0, records.mapped('line_ids').ids)]
+}).action_generate_xml()
+        </field>
+    </record>
+
+    <!-- ACCIÓN PARA COMPROBANTES INDIVIDUALES -->
+    <record id="action_generate_islr_xml_seniat_individual" model="ir.actions.server">
+        <field name="name">Generar XML Seniat</field>
+        <field name="model_id" ref="model_account_wh_islr"/>
+        <field name="binding_model_id" ref="model_account_wh_islr"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+action = records.env['account.wh.islr.xml.export.wizard'].create({
+    'wh_islr_ids': [(6, 0, records.ids)]
+}).action_generate_xml()
+        </field>
+    </record>
+</odoo>

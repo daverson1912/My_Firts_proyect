@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_move_form_multicurrency" model="ir.ui.view">
+        <field name="name">account.move.form.multicurrency</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+
+            <!-- ============================================================
+                 0) Footer: Reemplazar tax_totals nativo por campos individuales
+                    con diseño uniforme (todos widget=monetary).
+                    Orden: Gravable → Exento → Descuento → Subtotal → IVA →
+                           Total → Ret.IVA → Ret.ISLR → [Cantidad por pagar]
+                 ============================================================ -->
+
+            <!-- Ocultar el widget tax_totals nativo -->
+            <xpath expr="//group[hasclass('oe_subtotal_footer')]/field[@name='tax_totals']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- Inyectar todos los campos ANTES del l10n_ve_amount_to_pay del módulo fiscal -->
+            <xpath expr="//field[@name='l10n_ve_amount_to_pay']" position="before">
+                <field name="l10n_ve_ta_multicurrency_show_summary" invisible="1"/>
+
+                <field name="l10n_ve_ta_multicurrency_doc_taxable_amount" string="Gravable"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_exempt_amount" string="Exento"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_discount_amount" string="Descuento"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_subtotal" string="Subtotal"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       class="oe_subtotal_footer_separator" decoration-bf="1"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_gross_iva" string="IVA"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_total" string="Total"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       class="oe_subtotal_footer_separator" decoration-bf="1"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_ret_iva" string="Ret. IVA"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary or l10n_ve_ta_multicurrency_doc_ret_iva == 0"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_ret_islr" string="Ret. ISLR"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary or l10n_ve_ta_multicurrency_doc_ret_islr == 0"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_igtf" string="Impuesto IGTF"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary or not l10n_ve_has_igtf or move_type not in ('out_invoice', 'out_refund')"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_doc_amount_to_pay" string="Monto a Pagar"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary or (l10n_ve_ta_multicurrency_doc_ret_iva == 0 and l10n_ve_ta_multicurrency_doc_ret_islr == 0 and not l10n_ve_has_igtf)"
+                       class="oe_subtotal_footer_separator" decoration-bf="1"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+            </xpath>
+
+            <!-- Fix: badge "Retención IVA" solo en compras (base incluía out_invoice por error) -->
+            <xpath expr="//span[normalize-space(.)='Retencion IVA:']/parent::div" position="attributes">
+                <attribute name="invisible">not l10n_ve_partner_retention_type or move_type not in ('in_invoice', 'in_refund')</attribute>
+            </xpath>
+
+            <!-- Ocultar el l10n_ve_amount_to_pay del módulo base (usamos el nuestro) -->
+            <xpath expr="//field[@name='l10n_ve_amount_to_pay']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <!-- tax_ids: ocultar grupos por defecto, "Buscar más..." nativo para accederlos -->
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='tax_ids']" position="attributes">
+                <attribute name="widget">tax_many2many</attribute>
+            </xpath>
+
+            <!-- ============================================================
+                 2) Invoice Lines List: add columns after price_total
+                 ============================================================ -->
+            <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='price_total']" position="after">
+                <field name="l10n_ve_ta_multicurrency_taxable_amount_curr" string="Gravable" optional="show" sum="Total Gravable"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_exempt_amount_curr"  string="Exento" optional="show" sum="Total Exento"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_tax_amount_curr"     string="Impuesto" optional="show" sum="Total Impuesto"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+            </xpath>
+
+            <xpath expr="//field[@name='line_ids']/list/field[@name='debit']" position="before">
+                <field name="l10n_ve_ta_multicurrency_journal_doc_currency_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_debit_doc_amount" string="Débito" sum="Total"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_journal_doc_currency_id'}"/>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/list/field[@name='credit']" position="before">
+                <field name="l10n_ve_ta_multicurrency_credit_doc_amount" string="Crédito" sum="Total"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_journal_doc_currency_id'}"/>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/list/field[@name='debit']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/list/field[@name='credit']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/list/field[@name='credit']" position="after">
+                <field name="l10n_ve_ta_multicurrency_journal_ref_currency_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_debit_amount" string="Débito Ref." sum="Total" optional="show"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_journal_ref_currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_credit_amount" string="Crédito Ref." sum="Total" optional="show"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_journal_ref_currency_id'}"/>
+            </xpath>
+
+            <xpath expr="//group[@id='header_right_group']" position="inside">
+                <field name="l10n_ve_ta_multicurrency_prev_currency_id" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_prev_manual_rate" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_use_manual_rate"
+                       invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"
+                       readonly="state != 'draft'"/>
+                <field name="l10n_ve_ta_multicurrency_rate"
+                       invisible="not l10n_ve_ta_multicurrency_use_manual_rate or move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"
+                       readonly="state != 'draft'"/>
+            </xpath>
+
+            <!-- Multicurrency Totals Card (Integrated into Footer) -->
+            <xpath expr="//group[hasclass('oe_subtotal_footer')]" position="inside">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_enable_fiscal" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_show_retention_iva" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_show_retention_islr" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_show_amount_to_pay" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_show_total_amount" invisible="1"/>
+                
+                <!-- Separator and Bimonetary Section -->
+                <div class="border-top mt-3 mb-2" colspan="2" invisible="not l10n_ve_ta_multicurrency_show_summary"
+                     style="border-top: 1px solid #ccc !important;"/>
+                
+                <field name="l10n_ve_ta_multicurrency_summary_title" readonly="1" nolabel="1" colspan="2" 
+                       class="text-primary fw-bold fs-5 mb-2" invisible="not l10n_ve_ta_multicurrency_show_summary"/>
+                
+                <!-- Orden: Gravable → Exento → Descuento → Subtotal → IVA → Total → Ret.IVA → Ret.ISLR → IGTF → Monto a pagar -->
+                <field name="l10n_ve_ta_multicurrency_taxable_amount" string="Gravable" decoration-bf="1"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_exempt_amount" string="Exento"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_discount_amount" string="Descuento"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_untaxed_amount" string="Subtotal" class="oe_subtotal_footer_separator" decoration-bf="1"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_tax_amount" string="IVA"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_total_amount" string="Total" class="oe_subtotal_footer_separator" decoration-bf="1"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_retention_iva_amount" string="Retención IVA"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary or not l10n_ve_ta_multicurrency_show_retention_iva"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_retention_islr_amount" string="Retención ISLR"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary or not l10n_ve_ta_multicurrency_show_retention_islr"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_igtf_amount" string="Impuesto IGTF"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary or not l10n_ve_has_igtf or move_type not in ('out_invoice', 'out_refund')"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+
+                <field name="l10n_ve_ta_multicurrency_amount_to_pay" string="Monto a Pagar" class="oe_subtotal_footer_separator" decoration-bf="1"
+                       invisible="not l10n_ve_ta_multicurrency_show_summary or not l10n_ve_ta_multicurrency_show_amount_to_pay"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+
+            <xpath expr="//field[@name='amount_residual']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//form" position="inside">
+                <style>
+                    /* Hide Odoo's native multicurrency conversion / secondary currency lines in the footer */
+                    .oe_subtotal_footer .text-muted,
+                    .oe_subtotal_footer [class*="text-muted"],
+                    .oe_subtotal_footer br,
+                    div[name="tax_totals"] td:last-child span:not(:first-child),
+                    div[name="tax_totals"] td:last-child div:not(:first-child),
+                    div[name="tax_totals"] tr:has(.text-muted),
+                    div[name="tax_totals"] tr:has(span:nth-child(2)),
+                    .oe_subtotal_footer .oe_subtotal_footer_separator + .text-muted,
+                    .oe_subtotal_footer_separator + .text-muted,
+                    .oe_subtotal_footer_separator + br + span,
+                    .oe_subtotal_footer_separator + span:nth-of-type(n+2) {
+                        display: none !important;
+                    }
+                </style>
+            </xpath>
+
+            <!-- ============================================================
+                 ISLR Lines Multicurrency: ocultar columnas Monetary nativas
+                 (siempre, estático) y mostrar columnas Char _ref_display que
+                 usan {:,.2f} — 2 decimales garantizados.
+                 ============================================================ -->
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='price_subtotal']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='price_subtotal']" position="after">
+                <field name="l10n_ve_islr_price_subtotal_ref_display" string="Base Imponible Ref."/>
+            </xpath>
+
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='l10n_ve_islr_subject_amount_display']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='l10n_ve_islr_subject_amount_display']" position="after">
+                <field name="l10n_ve_islr_subject_amount_ref_display" string="Monto Sujeto Ref."/>
+            </xpath>
+
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='l10n_ve_islr_retention_calculation_display']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='l10n_ve_islr_retention_calculation_display']" position="after">
+                <field name="l10n_ve_islr_retention_calculation_ref_display" string="Calc. Imp Ref."/>
+            </xpath>
+
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='l10n_ve_islr_subtrahend']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='l10n_ve_islr_subtrahend']" position="after">
+                <field name="l10n_ve_islr_subtrahend_ref_display" string="Sustraendo Ref."/>
+            </xpath>
+
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='l10n_ve_islr_amount_line']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+            <xpath expr="//page[@name='islr_lines_tab']/field[@name='invoice_line_ids']/list/field[@name='l10n_ve_islr_amount_line']" position="after">
+                <!-- Float invisible necesario para que la decoración evalúe sin error -->
+                <field name="l10n_ve_islr_amount_line_ref" column_invisible="True"/>
+                <field name="l10n_ve_islr_amount_line_ref_display"
+                       string="Monto Retenido Ref."
+                       decoration-danger="l10n_ve_islr_amount_line_ref > 0"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Injection into Account Move List (Tree) View for Invoices, Bills, and Refunds -->
+    <record id="view_invoice_tree_multicurrency" model="ir.ui.view">
+        <field name="name">account.invoice.tree.multicurrency</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_total_in_currency_signed']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_total_amount" string="Total Ref." sum="Total" optional="show"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Injection into Account Move Tree (Asientos) -->
+    <record id="view_move_tree_multicurrency" model="ir.ui.view">
+        <field name="name">account.move.tree.multicurrency</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_total_signed']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='amount_total_signed']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_total_amount" string="Total Ref." sum="Total" optional="show"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Injection into Account Move Line (Journal Items) Tree View -->
+    <record id="view_move_line_tree_multicurrency" model="ir.ui.view">
+        <field name="name">account.move.line.tree.multicurrency</field>
+        <field name="model">account.move.line</field>
+        <field name="inherit_id" ref="account.view_move_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_residual']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='amount_residual_currency']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='debit']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='credit']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='balance']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='credit']" position="after">
+                <field name="l10n_ve_ta_multicurrency_journal_ref_currency_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_debit_amount" string="Débito Ref." sum="Total" optional="show"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_journal_ref_currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_credit_amount" string="Crédito Ref." sum="Total" optional="show"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_journal_ref_currency_id'}"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- View for Manual Reconciliation (Enterprise) -->
+    <record id="view_move_line_reconcile_tree_multicurrency" model="ir.ui.view">
+        <field name="name">account.move.line.list.reconcile.multicurrency</field>
+        <field name="model">account.move.line</field>
+        <field name="inherit_id" ref="account_accountant.view_move_line_reconcile_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_residual']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='amount_residual_currency']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='debit']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='credit']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='balance']" position="attributes">
+                <attribute name="sum"></attribute>
+            </xpath>
+            <xpath expr="//field[@name='credit']" position="after">
+                <field name="l10n_ve_ta_multicurrency_journal_ref_currency_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_debit_amount" string="Débito Ref." sum="Total Débito Ref." optional="show"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_journal_ref_currency_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_credit_amount" string="Crédito Ref." sum="Total Crédito Ref." optional="show"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_journal_ref_currency_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Herencia del search view de account.tax:
+         Agrega filtro "Sin Grupos de Impuestos" activo por defecto
+         (se coloca encima de los filtros con texto de ayuda).
+         El usuario puede desmarcarlo para ver también los grupos. -->
+    <record id="view_account_tax_search_multicurrency" model="ir.ui.view">
+        <field name="name">account.tax.search.multicurrency</field>
+        <field name="model">account.tax</field>
+        <field name="inherit_id" ref="account.view_account_tax_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='active']" position="before">
+                <filter name="no_grupos"
+                        string="Sin Grupos de Impuestos"
+                        domain="[('amount_type', '!=', 'group')]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

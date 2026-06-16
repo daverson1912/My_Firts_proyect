@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- ========== VISTA DE FORMULARIO CON PESTAÑAS ========== -->
+        
+        <record id="view_simplitfiscal_config_form" model="ir.ui.view">
+            <field name="name">simplitfiscal.config.form</field>
+            <field name="model">simplitfiscal.config</field>
+            <field name="arch" type="xml">
+                <form string="Configuración Simplit Fiscal">
+                    <!-- Header con botones de estado -->
+                    <header>
+                        <button name="action_configure" 
+                                string="Configurar" 
+                                type="object" 
+                                class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_activate" 
+                                string="Activar" 
+                                type="object" 
+                                class="btn-primary"
+                                invisible="state != 'configured'"/>
+                        <button name="action_reset_to_draft" 
+                                string="Volver a Borrador" 
+                                type="object" 
+                                class="btn-secondary"
+                                invisible="state == 'draft'"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,configured,active"/>
+                    </header>
+                    
+                    <sheet>
+                        <!-- Título y datos básicos -->
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name" placeholder="Nombre de la Configuración" required="1"/>
+                            </h1>
+                        </div>
+                        
+                        <group>
+                            <group>
+                                <field name="company_id" options="{'no_create': True, 'no_open': True}"/>
+                                <field name="country_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="active"/>
+                                <field name="taxes_generated" readonly="1"/>
+                            </group>
+                        </group>
+                        
+                        <!-- ========== PESTAÑAS PRINCIPALES ========== -->
+                        <notebook>
+                            <!-- PESTAÑA 1: Configuración General -->
+                            <page name="config" string="Configuración">
+                                <group string="Información del Agente de Retención IVA">
+                                    <group>
+                                        <field name="is_withholding_agent"/>
+                                        <field name="default_retention_type" 
+                                               invisible="not is_withholding_agent"
+                                               required="is_withholding_agent"/>
+                                    </group>
+                                </group>
+
+                                <group string="Configuración ISLR (Ventas)">
+                                    <group>
+                                        <field name="islr_provider_type_id" options="{'no_create': True, 'no_open': True}"/>
+                                    </group>
+                                </group>
+                                
+                                <group string="Información">
+                                    <div class="alert alert-info" role="alert">
+                                        <p><strong>¿Qué es un Agente de Retención?</strong></p>
+                                        <p>Los Contribuyentes Especiales designados por el SENIAT tienen la obligación de retener una parte del IVA (75% o 100%) cuando pagan facturas a proveedores.</p>
+                                        <br/>
+                                        <p><strong>Pasos siguientes:</strong></p>
+                                        <ol>
+                                            <li>Active "Es Agente de Retención IVA"</li>
+                                            <li>Vaya a la pestaña "Ret. IVA" y genere los impuestos automáticamente</li>
+                                            <li>Configure sus proveedores con el tipo de retención aplicable</li>
+                                        </ol>
+                                    </div>
+                                </group>
+                                
+                                <!-- Sección de Conexión API -->
+                                <separator string="CONEXIÓN API"/>
+                                <group>
+                                    <group>
+                                        <field name="ta_api_key" readonly="1" widget="char" string="API Key"/>
+                                        <field name="ta_api_connected" invisible="1"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <button name="action_register_api"
+                                            string="Conectar con TotalAplicaciones"
+                                            type="object"
+                                            class="btn-primary"
+                                            icon="fa-plug"
+                                            invisible="ta_api_connected"
+                                            help="Registre su licencia para obtener acceso al API"/>
+                                    <div class="alert alert-success" role="alert" invisible="not ta_api_connected">
+                                        <p><strong>✓ Conectado</strong> — API Key activa para esta compañía.</p>
+                                    </div>
+                                </group>
+                                
+                            </page>
+                            
+                            <!-- PESTAÑA 2: Ret. IVA -->
+                            <page name="taxes" string="Ret. IVA">
+                                <separator string="IMPUESTOS"/>
+                                <group>
+                                    <group string="Generación y Sincronización de Impuestos">
+                                        <div class="alert alert-warning" role="alert" invisible="taxes_generated">
+                                            <p><strong>⚠️ Los impuestos aún no han sido generados</strong></p>
+                                            <p>Haga clic en el botón para crear automáticamente la estructura fiscal de Compras y Ventas.</p>
+                                        </div>
+                                        
+                                        <div class="alert alert-success" role="alert" invisible="not taxes_generated">
+                                            <p><strong>✓ Impuestos configurados</strong></p>
+                                            <p>Se han generado <field name="taxes_count" readonly="1"/> impuestos y <field name="tax_groups_count" readonly="1"/> grupos combo (Compras + Ventas).</p>
+                                            <p><small>Puede volver a pulsar el botón para sincronizar cambios o actualizar nombres.</small></p>
+                                        </div>
+                                    </group>
+                                </group>
+                                
+                                <group>
+                                    <button name="action_generate_taxes" 
+                                            string="Generar / Actualizar Impuestos" 
+                                            type="object" 
+                                            class="btn-primary oe_highlight"
+                                            icon="fa-magic"
+                                            help="Crea o actualiza los impuestos de Compras y Ventas con sus respectivos combos de retención."/>
+                                </group>
+                                
+                                <group string="Resumen de Estructura Fiscal" invisible="not taxes_generated">
+                                    <div class="alert alert-info" role="alert">
+                                        <p><strong>Impuestos de Compra:</strong></p>
+                                        <ul>
+                                            <li>IVA 16% e IVA 8% (Compras)</li>
+                                            <li>Combos: IVA + Retención (75% y 100%)</li>
+                                        </ul>
+                                        <p><strong>Impuestos de Venta:</strong></p>
+                                        <ul>
+                                            <li>IVA 16% e IVA 8% (Ventas)</li>
+                                            <li>Combos: IVA + Retención (Basado en porcentaje de empresa)</li>
+                                        </ul>
+                                    </div>
+                                </group>
+
+                                <!-- Correlativo de Retenciones IVA -->
+                                <separator string="CORRELATIVO"/>
+                                <group>
+                                    <group>
+                                        <field name="withholding_sequence_display" string="Último Correlativo IVA"/>
+                                    </group>
+                                </group>
+                                <div style="max-width: 300px;">
+                                    <button name="action_configure_sequence" 
+                                            string="Configurar Correlativo de Ret. IVA" 
+                                            type="object" 
+                                            class="btn-secondary"
+                                            icon="fa-sort-numeric-asc"
+                                            help="Configure el número secuencial para los comprobantes de retención IVA"/>
+                                </div>
+                            </page>
+                            
+                            <!-- PESTAÑA 3: Automatización -->
+                            <page name="automation" string="Automatización">
+                                <group string="Reglas de Reemplazo Automático">
+                                    <div class="alert alert-info" role="alert">
+                                        <p><strong>📋 Funcionamiento de la Automatización</strong></p>
+                                        <p>Cuando cree una factura de proveedor, el sistema reemplazará automáticamente los impuestos según las siguientes reglas:</p>
+                                        <br/>
+                                        <table class="table table-sm table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Impuesto Original</th>
+                                                    <th>Retención Proveedor</th>
+                                                    <th>Impuesto Aplicado</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>IVA 16%</td>
+                                                    <td>75%</td>
+                                                    <td>SP IVA +RET 75% (16% - 12%)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>IVA 16%</td>
+                                                    <td>100%</td>
+                                                    <td>SP IVA +RET 100% (16% - 16%)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>IVA 8%</td>
+                                                    <td>75%</td>
+                                                    <td>SP IVAR +RET 75% (8% - 6%)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>IVA 8%</td>
+                                                    <td>100%</td>
+                                                    <td>SP IVAR +RET 100% (8% - 8%)</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <br/>
+                                        <p><strong>Condiciones para COMPRAS (in_invoice):</strong></p>
+                                        <ol>
+                                            <li>Su empresa debe ser Agente de Retención.</li>
+                                            <li>El proveedor debe tener configurado el tipo de retención (75% o 100%).</li>
+                                        </ol>
+                                        <p><strong>Condiciones para VENTAS (out_invoice):</strong></p>
+                                        <ol>
+                                            <li>Su empresa debe ser Agente de Retención (Sujeto).</li>
+                                            <li>El cliente debe ser Agente de Retención (Contribuyente Especial).</li>
+                                            <li>Se aplicará el porcentaje definido en su Configuración Fiscal.</li>
+                                        </ol>
+                                    </div>
+                                </group>
+                                
+                                <group string="Estado de la Automatización">
+                                    <div class="alert alert-warning" role="alert" invisible="state == 'active'">
+                                        <p><strong>⚠️ Automatización Inactiva</strong></p>
+                                        <p>La automatización estará activa cuando el estado de la configuración sea "Activa".</p>
+                                    </div>
+                                    
+                                    <div class="alert alert-success" role="alert" invisible="state != 'active'">
+                                        <p><strong>✓ Automatización Activa</strong></p>
+                                        <p>El reemplazo automático de impuestos está funcionando correctamente.</p>
+                                    </div>
+                                </group>
+                            </page>
+
+                            <!-- PESTAÑA 4: Retención ISLR -->
+                            <page name="ret_islr" string="Ret. ISLR">
+                                <group string="Maestros de Retención ISLR">
+                                    <div class="alert alert-info" role="alert">
+                                        <p><strong>Sincronización de Datos Maestros</strong></p>
+                                        <p>Mantenga su información actualizada: pulse aquí para descargar los últimos datos de proveedores y retenciones.</p>
+                                    </div>
+                                </group>
+                                <group>
+                                    <button name="action_sync_islr_master_data" 
+                                            string="Actualizar Maestros" 
+                                            type="object" 
+                                            class="btn-primary"
+                                            icon="fa-refresh"
+                                            help="Actualiza manualmente los Tipos de Proveedor y Retenciones desde el API"/>
+                                </group>
+
+                                <group string="Configuración Contable ISLR - Ventas">
+                                    <group>
+                                        <field name="l10n_ve_islr_journal_id_sale"/>
+                                        <field name="l10n_ve_islr_account_id_sale"/>
+                                    </group>
+                                </group>
+
+                                <group string="Configuración Contable ISLR - Compras">
+                                    <group>
+                                        <field name="l10n_ve_islr_journal_id_purchase"/>
+                                        <field name="l10n_ve_islr_account_id_purchase"/>
+                                    </group>
+                                </group>
+
+
+                                <!-- Correlativo de Retenciones ISLR -->
+                                <separator string="CORRELATIVO"/>
+                                <group>
+                                    <group>
+                                        <field name="islr_withholding_sequence_display" string="Último Correlativo ISLR"/>
+                                    </group>
+                                </group>
+                                <div style="max-width: 300px;">
+                                    <button name="action_configure_islr_sequence" 
+                                            string="Configurar Correlativo de Ret. ISLR" 
+                                            type="object" 
+                                            class="btn-secondary"
+                                            icon="fa-sort-numeric-asc"
+                                            help="Configure el número secuencial para los comprobantes de retención ISLR"/>
+                                </div>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    
+                    <!-- Chatter (mensajes y actividades) -->
+                    <chatter/>
+                </form>
+            </field>
+        </record>
+        
+        <!-- ========== VISTA DE LISTA ========== -->
+        
+        <record id="view_simplitfiscal_config_tree" model="ir.ui.view">
+            <field name="name">simplitfiscal.config.tree</field>
+            <field name="model">simplitfiscal.config</field>
+            <field name="arch" type="xml">
+                <list string="Configuraciones Simplit Fiscal">
+                    <field name="name"/>
+                    <field name="company_id"/>
+                    <field name="is_withholding_agent"/>
+                    <field name="taxes_generated"/>
+                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'active'" decoration-warning="state == 'configured'"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- ========== ACCIÓN DE VENTANA ========== -->
+        
+        <record id="action_simplitfiscal_config" model="ir.actions.act_window">
+            <field name="name">Configuración Simplit Fiscal</field>
+            <field name="res_model">simplitfiscal.config</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Crear una nueva configuración de Simplit Fiscal
+                </p>
+                <p>
+                    Configure la gestión fiscal para Contribuyentes Especiales en Venezuela.
+                </p>
+            </field>
+        </record>
+        
+    </data>
+</odoo>

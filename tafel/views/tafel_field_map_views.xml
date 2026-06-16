@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_tafel_field_map_list" model="ir.ui.view">
+        <field name="name">tafel.field.map.list</field>
+        <field name="model">tafel.field.map</field>
+        <field name="arch" type="xml">
+            <list string="Mapeo de Campos">
+                <field name="sequence" widget="handle"/>
+                <field name="api_field_label" string="Campo API" readonly="1"/>
+                <field name="source_model" string="Contexto" readonly="1" widget="badge"
+                       decoration-info="source_model == 'move'"
+                       decoration-warning="source_model == 'line'"/>
+                <field name="source_model_technical" column_invisible="1"/>
+                <field name="api_field_required" string="Req." readonly="1" optional="show"/>
+                <field name="odoo_expr" string="Campo Odoo"/>
+                <field name="default_value" string="Valor por Defecto"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tafel_field_map_form" model="ir.ui.view">
+        <field name="name">tafel.field.map.form</field>
+        <field name="model">tafel.field.map</field>
+        <field name="arch" type="xml">
+            <form string="Mapeo de Campo">
+                <sheet>
+                    <group>
+                        <group string="Campo del API">
+                            <field name="api_field_label" readonly="1"/>
+                            <field name="api_field_key" readonly="1" string="Clave técnica"/>
+                            <field name="source_model" readonly="1" string="Contexto"/>
+                            <field name="api_field_required" readonly="1"/>
+                        </group>
+                        <group string="Configuración Odoo">
+                            <field name="source_model_technical" invisible="1"/>
+                            <field name="odoo_field_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="odoo_related_field_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   invisible="not odoo_field_relation"/>
+                            <field name="odoo_expr"
+                                   string="Expresión resultante"
+                                   help="Puede editar manualmente para expresiones de 3+ niveles (ej: product_id.uom_id.name)."/>
+                            <field name="default_value"/>
+                        </group>
+                    </group>
+                    <group string="Descripción">
+                        <field name="api_field_description" nolabel="1" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

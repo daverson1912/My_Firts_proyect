@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Acción para Ajustes -->
+    <record id="action_whub_config_settings" model="ir.actions.act_window">
+        <field name="name">Ajustes WispHub</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'whub_integration', 'bin_size': False}</field>
+    </record>
+
+    <!-- Menu Raíz: Le asignamos la acción directamente para corregir el bug -->
+    <menuitem id="menu_whub_root"
+              name="Integración WispHub"
+              web_icon="whub_integration,static/description/icon.png"
+              action="action_whub_config_settings"
+              sequence="10"/>
+
+    <!-- Submenús para organización -->
+    <menuitem id="menu_whub_config"
+              name="Configuración"
+              parent="menu_whub_root"
+              sequence="10"/>
+
+    <menuitem id="menu_whub_settings"
+              name="Ajustes"
+              parent="menu_whub_config"
+              action="action_whub_config_settings"
+              sequence="1"/>
+
+    <!-- Menú de Operaciones -->
+    <menuitem id="menu_whub_operations"
+              name="Operaciones"
+              parent="menu_whub_root"
+              sequence="20"/>
+
+    <menuitem id="menu_whub_sync_log"
+              name="Historial de Sincronización"
+              parent="menu_whub_operations"
+              action="action_whub_notice_sync_log"
+              sequence="10"/>
+
+    <menuitem id="menu_whub_sync_date_query"
+              name="Consultar Avisos por Fechas"
+              parent="menu_whub_operations"
+              action="action_whub_notice_sync_wizard"
+              sequence="20"/>
+</odoo>

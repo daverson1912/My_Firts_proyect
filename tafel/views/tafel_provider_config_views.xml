@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_tafel_provider_config_list" model="ir.ui.view">
+        <field name="name">tafel.provider.config.list</field>
+        <field name="model">tafel.provider.config</field>
+        <field name="arch" type="xml">
+            <list string="Proveedor de Facturación">
+                <field name="provider_name"/>
+                <field name="credential_is_qa" string="Ambiente QA"/>
+                <field name="tenant_provider_id_short" string="ID Vinculación"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_tafel_provider_config_form" model="ir.ui.view">
+        <field name="name">tafel.provider.config.form</field>
+        <field name="model">tafel.provider.config</field>
+        <field name="arch" type="xml">
+            <form string="Proveedor de Facturación">
+                <sheet>
+                    <group>
+                        <group string="Información del Proveedor">
+                            <field name="provider_name" readonly="1"/>
+                            <field name="tenant_provider_id_short" readonly="1"
+                                   string="ID de Vinculación"/>
+                        </group>
+                        <group string="Credenciales" groups="tafel.group_tafel_manager">
+                            <field name="credential_usuario"/>
+                            <field name="credential_clave" password="True"/>
+                            <field name="credential_is_qa"/>
+                            <div>
+                                <button name="action_update_credentials" type="object"
+                                        string="Actualizar Datos" class="btn-sm btn-secondary"/>
+                            </div>
+                        </group>
+                    </group>
+                    <separator string="Correlativos"/>
+                    <field name="journal_config_ids">
+                        <list editable="bottom" string="Correlativos">
+                            <field name="active" widget="boolean_toggle" optional="show"/>
+                            <field name="journal_id"/>
+                            <field name="start_move_id"
+                                   domain="[('journal_id', '=', journal_id), ('move_type', 'in', ['out_invoice', 'out_refund']), ('state', '=', 'posted')]"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   string="Transmitir desde"/>
+                            <field name="serie_enabled" string="Serie HKA"/>
+                            <field name="serie_code"
+                                   optional="show"
+                                   invisible="not serie_enabled"/>
+                        </list>
+                    </field>
+                    <separator string="Mapeo de Métodos de Pago"/>
+                    <field name="payment_method_map_ids">
+                        <list editable="bottom" string="Métodos de Pago">
+                            <field name="journal_id"/>
+                            <field name="provider_payment_method_id"
+                                   domain="[('provider_config_id', '=', parent.id)]"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_iva_purchase_ledger_wizard_form" model="ir.ui.view">
+        <field name="name">account.iva.purchase.ledger.wizard.form</field>
+        <field name="model">account.iva.purchase.ledger.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generar Libro de Compras IVA">
+                <sheet>
+                    <div class="alert alert-info" role="alert" invisible="state != 'draft'">
+                        <p>Seleccione el período y la compañía para generar el Libro de Compras IVA.</p>
+                    </div>
+
+                    <div class="alert alert-success" role="alert" invisible="state != 'done'">
+                        <p><strong>✅ Reportes generados exitosamente.</strong></p>
+                    </div>
+
+                    <group invisible="state != 'draft'">
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <group invisible="state != 'done'">
+                        <group string="Descargar PDF" invisible="not pdf_file">
+                            <field name="pdf_filename" invisible="1"/>
+                            <field name="pdf_file" filename="pdf_filename" readonly="1" string="Archivo PDF"/>
+                        </group>
+                        <group string="Descargar Excel" invisible="not excel_file">
+                            <field name="excel_filename" invisible="1"/>
+                            <field name="excel_file" filename="excel_filename" readonly="1" string="Archivo Excel"/>
+                        </group>
+                    </group>
+                    
+                    <field name="state" invisible="1"/>
+                </sheet>
+                <footer>
+                    <button name="action_generate_pdf" string="Generar PDF" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_generate_excel" string="Generar Excel" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel" invisible="state != 'draft'"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel" invisible="state != 'done'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_account_iva_purchase_ledger_wizard" model="ir.actions.act_window">
+        <field name="name">Libro de Compras IVA</field>
+        <field name="res_model">account.iva.purchase.ledger.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Menú Principal de Libros de Compras bajo Reportes -->
+    <menuitem id="menu_account_purchase_ledgers_root"
+              name="Libros de compras"
+              parent="account.menu_finance_reports"
+              sequence="50"/>
+
+    <!-- Submenú IVA -->
+    <menuitem id="menu_account_iva_purchase_ledger"
+              name="IVA"
+              parent="menu_account_purchase_ledgers_root"
+              action="action_account_iva_purchase_ledger_wizard"
+              sequence="10"/>
+</odoo>

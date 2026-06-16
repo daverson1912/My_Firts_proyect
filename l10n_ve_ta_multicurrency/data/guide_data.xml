@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="guide_intro" model="l10n_ve_ta_multicurrency.guide">
+            <field name="name">Introducción y Conceptos</field>
+            <field name="sequence">10</field>
+            <field name="content" type="html">
+                <div class="o_guide_content">
+                    <h3>Bienvenido a Multimoneda Venezuela</h3>
+                    <p>Este módulo permite gestionar operaciones financieras bimonetarias en tiempo real, cumpliendo con las normativas locales y facilitando la visualización en dólares (USD) y Bolívares (VES).</p>
+                    <div class="row mt-4">
+                        <div class="col-6">
+                            <div class="card p-3 shadow-sm border-0 bg-light">
+                                <strong>Tasa Aplicada</strong>
+                                <p class="text-muted small">El sistema utiliza una tasa única para cada documento (Factura, Pago, etc.), garantizando que los cálculos de impuestos y gravables sean exactos.</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card p-3 shadow-sm border-0 bg-light">
+                                <strong>Referencia Dinámica</strong>
+                                <p class="text-muted small">Si factura en Bolívares, verá la referencia en Dólares. Si factura en Dólares, verá la referencia en Bolívares.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </field>
+        </record>
+
+        <record id="guide_sync" model="l10n_ve_ta_multicurrency.guide">
+            <field name="name">Sincronización de Tasas</field>
+            <field name="sequence">20</field>
+            <field name="content" type="html">
+                <div class="o_guide_content">
+                    <h3>Automatización de la Tasa BCV</h3>
+                    <p>El sistema incluye una integración nativa con el API de <strong>Simplit</strong> para obtener las tasas oficiales del Banco Central de Venezuela.</p>
+                    <ul>
+                        <li><strong>Activación:</strong> Vaya al menú <em>Configuración > Sincronización API</em> y active el interruptor.</li>
+                        <li><strong>Frecuencia:</strong> Las tasas se actualizan automáticamente una vez al día.</li>
+                        <li><strong>Manual:</strong> En cualquier factura puede marcar "Usar Tasa Manual" si desea ignorar la tasa oficial del día.</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <strong>Nota:</strong> Los detalles técnicos del API están ocultos para simplificar el uso diario. Solo deben ser ajustados por personal técnico si es necesario.
+                    </div>
+                </div>
+            </field>
+        </record>
+
+        <record id="guide_reports" model="l10n_ve_ta_multicurrency.guide">
+            <field name="name">Reportes y Auditoría</field>
+            <field name="sequence">30</field>
+            <field name="content" type="html">
+                <div class="o_guide_content">
+                    <h3>Información Financiera Transparente</h3>
+                    <p>Todos los documentos de contabilidad incluyen una tarjeta de resumen bimonetario al final.</p>
+                    <table class="table table-sm mt-3">
+                        <thead class="bg-primary text-white">
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Gravable Ref.</td>
+                                <td>Monto base sujeto a impuestos en moneda de referencia.</td>
+                            </tr>
+                            <tr>
+                                <td>Descuento Ref.</td>
+                                <td>Total de descuentos aplicados en moneda de referencia.</td>
+                            </tr>
+                            <tr>
+                                <td>Impuesto Ref.</td>
+                                <td>Monto del IVA calculado en moneda de referencia.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </field>
+        </record>
+    </data>
+</odoo>

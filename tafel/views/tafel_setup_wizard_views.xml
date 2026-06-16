@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_tafel_setup_wizard_form" model="ir.ui.view">
+        <field name="name">tafel.setup.wizard.form</field>
+        <field name="model">tafel.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Registro — Facturación Electrónica">
+                <group>
+                    <group string="Datos de la Empresa">
+                        <field name="company_name"/>
+                        <field name="email"/>
+                        <field name="tax_id"/>
+                        <field name="country_code"/>
+                    </group>
+                    <group string="Acceso">
+                        <field name="password" password="True"/>
+                        <field name="password_confirm" password="True"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_register" type="object"
+                            string="Registrar" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_tafel_setup_wizard" model="ir.actions.act_window">
+        <field name="name">Registro de Facturación Electrónica</field>
+        <field name="res_model">tafel.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

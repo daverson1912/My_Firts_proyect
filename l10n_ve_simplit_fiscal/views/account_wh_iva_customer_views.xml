@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- VISTA: Lista para Unificador de Ventas (Especializada) -->
+    <record id="view_wh_iva_unifier_customer_tree" model="ir.ui.view">
+        <field name="name">account.wh.iva.unifier.customer.tree</field>
+        <field name="model">account.wh.iva</field>
+        <field name="arch" type="xml">
+            <list string="Cargar Retenciones de Clientes" 
+                  decoration-warning="state == 'draft'" 
+                  decoration-success="state == 'posted'"
+                  create="false"
+                  delete="false">
+                
+                <header>
+                    <button name="action_open_customer_unifier" string="Cargar Nro. Comprobante" type="object" class="oe_highlight"/>
+                </header>
+                
+                <field name="name" string="Retención" width="120px"/>
+                <field name="date" string="Fecha" width="100px"/>
+                <field name="partner_vat" string="RIF Cliente" width="120px"/>
+                <field name="partner_id" string="Cliente" width="200px"/>
+                <field name="invoice_number" string="Factura" width="150px"/>
+                <field name="amount_total_invoice" string="Monto Doc." width="120px" sum="Total"/>
+                <field name="amount_taxable_base" string="Base Imp." width="120px" sum="Total Base"/>
+                <field name="amount_base" string="Monto IVA" width="120px" sum="Total IVA"/>
+                <field name="amount_total_ret" string="Retenido" width="120px" sum="Total Retenido"/>
+                <field name="state" string="Estado" widget="badge" 
+                       decoration-warning="state == 'draft'" 
+                       decoration-success="state == 'posted'" 
+                       width="90px"/>
+                
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ACCIÓN: Unificador de Retenciones (Ventas) -->
+    <record id="action_wh_iva_unifier_customer" model="ir.actions.act_window">
+        <field name="name">Cargar Retenciones de Clientes</field>
+        <field name="res_model">account.wh.iva</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_wh_iva_unifier_customer_tree"/>
+        <field name="search_view_id" ref="l10n_ve_simplit_fiscal.view_wh_iva_unifier_search"/>
+        <field name="domain">[('type', '=', 'sale')]</field>
+        <field name="context">{
+            'default_type': 'sale',
+            'search_default_draft': 1,
+            'search_default_filter_date': 1,
+        }</field>
+    </record>
+
+    <!-- ACCIÓN: Comprobantes de Retención IVA (Ventas) -->
+    <record id="action_account_wh_iva_summary_customer" model="ir.actions.act_window">
+        <field name="name">Comprobantes de Retención (Ventas)</field>
+        <field name="res_model">account.wh.iva.summary</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="l10n_ve_simplit_fiscal.view_account_wh_iva_summary_tree"/>
+        <field name="search_view_id" ref="l10n_ve_simplit_fiscal.view_account_wh_iva_summary_search"/>
+        <field name="domain">[('type', '=', 'sale')]</field>
+        <field name="context">{
+            'default_type': 'sale',
+            'search_default_this_month': 1,
+        }</field>
+    </record>
+
+    <!-- ========== MENÚS EN CLIENTES ========== -->
+    
+    <!-- Menú principal: Retenciones de IVA (Ventas) -->
+    <menuitem id="menu_retenciones_iva_customer"
+              name="Retenciones de IVA"
+              parent="account.menu_finance_receivables"
+              sequence="14"/>
+    
+    <!-- Submenú Único: Comprobantes -->
+    <menuitem id="menu_unificador_retenciones_customer"
+              name="Comprobantes"
+              parent="menu_retenciones_iva_customer"
+              action="action_wh_iva_unifier_customer"
+              sequence="1"/>
+
+</odoo>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_sales_ledger_igtf" model="ir.actions.report">
+        <field name="name">Libro de Ventas (Resumen Diario)</field>
+        <field name="model">account.iva.sales.ledger.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_ve_simplit_fiscal.report_sales_ledger_igtf</field>
+        <field name="report_file">l10n_ve_simplit_fiscal.report_sales_ledger_igtf</field>
+        <field name="print_report_name">'Libro_Ventas_Diario_%s' % object.id</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="paperformat_id" ref="l10n_ve_simplit_fiscal.paperformat_wh_iva"/>
+    </record>
+
+    <record id="action_report_sales_ledger_detailed" model="ir.actions.report">
+        <field name="name">Libro de Ventas Detallado</field>
+        <field name="model">account.iva.sales.ledger.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">l10n_ve_simplit_fiscal.report_sales_ledger_detailed</field>
+        <field name="report_file">l10n_ve_simplit_fiscal.report_sales_ledger_detailed</field>
+        <field name="print_report_name">'Libro_Ventas_Detallado_%s' % object.id</field>
+        <field name="binding_model_id" eval="False"/>
+        <field name="paperformat_id" ref="l10n_ve_simplit_fiscal.paperformat_wh_iva"/>
+    </record>
+</odoo>

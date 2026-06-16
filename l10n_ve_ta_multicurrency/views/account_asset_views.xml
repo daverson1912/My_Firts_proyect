@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_asset_form_inherit_l10n_ve_ta" model="ir.ui.view">
+        <field name="name">account.asset.form.inherit.l10n_ve_ta</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_form"/>
+        <field name="mode">extension</field>
+        <field name="arch" type="xml">
+            <!-- Add Total Ref and Applied Rate in the Asset Values group -->
+            <xpath expr="//group[@name='asset_values']/field[@name='original_value']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+                <field name="l10n_ve_ta_multicurrency_original_value_ref" 
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                       invisible="state == 'model'"
+                       readonly="state != 'draft'"/>
+                <label for="l10n_ve_ta_multicurrency_applied_rate" invisible="state == 'model'"/>
+                <div class="o_row" invisible="state == 'model'">
+                    <field name="l10n_ve_ta_multicurrency_applied_rate"
+                           readonly="not l10n_ve_ta_multicurrency_use_manual_rate or state != 'draft'"/>
+                    <field name="l10n_ve_ta_multicurrency_use_manual_rate" 
+                           nolabel="1" 
+                           widget="boolean_toggle"
+                           readonly="state != 'draft'"/>
+                </div>
+            </xpath>
+
+            <!-- Add multicurrency fields to Current Values group -->
+            <xpath expr="//group[@name='current_values']" position="inside">
+                <field name="l10n_ve_ta_multicurrency_book_value_ref" 
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_value_residual_ref" 
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+
+            <!-- Add multicurrency columns to the Depreciation Board -->
+            <xpath expr="//field[@name='depreciation_move_ids']/list/field[@name='depreciation_value']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_depreciation_value_ref" 
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                       readonly="1"
+                       force_save="1"/>
+            </xpath>
+            <xpath expr="//field[@name='depreciation_move_ids']/list/field[@name='asset_depreciated_value']" position="after">
+                <field name="l10n_ve_ta_multicurrency_asset_depreciated_value_ref" 
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                       readonly="1"
+                       force_save="1"/>
+            </xpath>
+            <xpath expr="//field[@name='depreciation_move_ids']/list/field[@name='asset_remaining_value']" position="after">
+                <field name="l10n_ve_ta_multicurrency_asset_remaining_value_ref" 
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                       readonly="1"
+                       force_save="1"/>
+            </xpath>
+
+            <!-- Add multicurrency columns to the Bills tab -->
+            <xpath expr="//field[@name='original_move_line_ids']/list/field[@name='debit']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_debit_amount" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+            <xpath expr="//field[@name='original_move_line_ids']/list/field[@name='credit']" position="after">
+                <field name="l10n_ve_ta_multicurrency_credit_amount" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_asset_tree_inherit_l10n_ve_ta" model="ir.ui.view">
+        <field name="name">account.asset.list.inherit.l10n_ve_ta</field>
+        <field name="model">account.asset</field>
+        <field name="inherit_id" ref="account_asset.view_account_asset_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='original_value']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_original_value_ref" 
+                       string="Total Ref."
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                       sum="Total Ref."/>
+            </xpath>
+            <xpath expr="//field[@name='book_value']" position="after">
+                <field name="l10n_ve_ta_multicurrency_book_value_ref" 
+                       string="Book Value Ref."
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+            <xpath expr="//field[@name='value_residual']" position="after">
+                <field name="l10n_ve_ta_multicurrency_value_residual_ref" 
+                       string="Depreciable Ref."
+                       widget="monetary" 
+                       options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

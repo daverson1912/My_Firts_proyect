@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Igual que web.Many2ManyTagsField — sin modificaciones visuales -->
+    <t t-name="l10n_ve_ta_multicurrency.TaxMany2ManyField">
+        <div
+            class="o_field_tags d-inline-flex flex-wrap gap-1 mw-100"
+            t-att-class="{'o_tags_input o_input': !props.readonly}"
+            t-ref="many2ManyTagsField"
+        >
+            <TagsList tags="tags"/>
+            <div t-if="showM2OSelectionField"
+                 class="o_field_many2many_selection d-inline-flex w-100"
+                 t-ref="autoComplete">
+                <Many2XAutocomplete
+                    id="props.id"
+                    placeholder="tags.length ? '' : props.placeholder"
+                    resModel="relation"
+                    autoSelect="true"
+                    fieldString="string"
+                    activeActions="activeActions"
+                    update="update"
+                    quickCreate="activeActions.create ? quickCreate : null"
+                    context="props.context"
+                    getDomain.bind="getDomain"
+                    isToMany="true"
+                    nameCreateField="props.nameCreateField"
+                    noSearchMore="props.noSearchMore"
+                    getOptionClassnames.bind="getOptionClassnames"
+                />
+            </div>
+        </div>
+    </t>
+</templates>

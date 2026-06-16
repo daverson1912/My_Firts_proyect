@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- View extension logic for res.currency Form View -->
+    <record id="view_currency_form_inherit_fiscal" model="ir.ui.view">
+        <field name="name">res.currency.form.fiscal</field>
+        <field name="model">res.currency</field>
+        <field name="inherit_id" ref="base.view_currency_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook/page[1]" position="before">
+                <page string="Configuración Bimonetaria" name="bimonetario">
+                    <group>
+                        <group string="ESTADO FISCAL">
+                            <field name="l10n_ve_ta_multicurrency_is_fiscal" string="Moneda Referencial (Fiscal)"/>
+                            <field name="l10n_ve_ta_multicurrency_is_locked" readonly="1" invisible="not l10n_ve_ta_multicurrency_is_locked"/>
+                        </group>
+                        <group string="CÁLCULO DE TASA">
+                            <field name="l10n_ve_ta_multicurrency_operation" 
+                                   widget="radio" 
+                                   options="{'horizontal': true}"
+                                   readonly="not l10n_ve_ta_multicurrency_is_fiscal"
+                                   force_save="1"/>
+                            <p class="text-muted small" colspan="2">
+                                <i class="fa fa-info-circle me-1"/> 
+                                <b>Multiplicar:</b> Use esto si su Odoo está en Dólares.<br/>
+                                <b>Dividir:</b> Use esto si su Odoo está en Bolívares.
+                            </p>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_currency_tree_inherit_fiscal" model="ir.ui.view">
+        <field name="name">res.currency.tree.fiscal</field>
+        <field name="model">res.currency</field>
+        <field name="inherit_id" ref="base.view_currency_tree"/>
+        <field name="arch" type="xml">
+            <!-- Removed editable='bottom' to force editing inside the form view -->
+            <xpath expr="//field[@name='active']" position="after">
+                <field name="l10n_ve_ta_multicurrency_is_locked" invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_is_fiscal"
+                       invisible="l10n_ve_ta_multicurrency_is_locked"/>
+                <!-- El botón de candado solo aparece cuando está bloqueado -->
+                <button name="read" type="object" icon="fa-lock" disabled="1" title="Para desbloquear, desmarque la moneda referencial actual" invisible="not l10n_ve_ta_multicurrency_is_locked" class="text-danger border-0 bg-transparent"/>
+                <field name="l10n_ve_ta_multicurrency_operation"
+                       readonly="not l10n_ve_ta_multicurrency_is_fiscal"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

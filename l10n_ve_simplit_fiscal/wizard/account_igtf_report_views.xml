@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_igtf_report_wizard_form" model="ir.ui.view">
+        <field name="name">account.igtf.report.wizard.form</field>
+        <field name="model">account.igtf.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generar Reporte de IGTF General">
+                <sheet>
+                    <div class="alert alert-info" role="alert" invisible="state != 'draft'">
+                        <p>Seleccione el período y la compañía para generar el reporte de IGTF General.</p>
+                    </div>
+
+                    <div class="alert alert-success" role="alert" invisible="state != 'done'">
+                        <p><strong>✅ Reporte generado exitosamente.</strong></p>
+                    </div>
+
+                    <group invisible="state != 'draft'">
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <group invisible="state != 'done'">
+                        <group string="Descargar PDF" invisible="not pdf_file">
+                            <field name="pdf_filename" invisible="1"/>
+                            <field name="pdf_file" filename="pdf_filename" readonly="1" string="Archivo PDF"/>
+                        </group>
+                    </group>
+                    
+                    <field name="state" invisible="1"/>
+                </sheet>
+                <footer>
+                    <button name="action_generate_pdf" string="Generar PDF" type="object" class="btn-primary" invisible="state != 'draft'"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel" invisible="state != 'draft'"/>
+                    <button string="Cerrar" class="btn-secondary" special="cancel" invisible="state != 'done'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_account_igtf_report_wizard" model="ir.actions.act_window">
+        <field name="name">Reporte IGTF General</field>
+        <field name="res_model">account.igtf.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

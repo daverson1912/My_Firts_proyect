@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="account.TaxTotalsField" t-inherit-mode="extension">
+        <!-- We want to suppress any native multicurrency conversion displayed in parentheses.
+             Since the native component might render it as a text node or a span, 
+             we will wrap the total in a way that allows us to control it, 
+             or simply hide the display_in_company_currency part if it's there. -->
+        <xpath expr="//span[@name='amount_total']" position="attributes">
+            <attribute name="class" add="o_l10n_ve_ta_no_multicurrency" separator=" "/>
+        </xpath>
+    </t>
+
+    <t t-inherit="account.TaxGroupComponent" t-inherit-mode="extension">
+        <xpath expr="//span[hasclass('o_tax_group_amount_value')]" position="attributes">
+            <attribute name="class" add="o_l10n_ve_ta_no_multicurrency" separator=" "/>
+        </xpath>
+    </t>
+</templates>

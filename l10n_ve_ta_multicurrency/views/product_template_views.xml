@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Injection into Product Template Kanban View (Ribbon Design) -->
+    <record id="view_product_template_kanban_multicurrency" model="ir.ui.view">
+        <field name="name">product.template.kanban.multicurrency</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_kanban_view"/>
+        <field name="arch" type="xml">
+            <!-- Add the multicurrency ribbon to the top right of the Kanban Card -->
+            <xpath expr="//t[@t-name='card']" position="inside">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+                <div style="position: absolute; bottom: 0; right: 0; background: linear-gradient(135deg, #017e84, #005a5e); color: white; font-weight: bold; padding: 3px 10px; border-top-left-radius: 12px; font-size: 0.85em; box-shadow: -2px -2px 5px rgba(0,0,0,0.15); z-index: 10; pointer-events: none; white-space: nowrap; display: flex; align-items: center; gap: 4px;" title="Total Ref.">
+                    <field name="l10n_ve_ta_multicurrency_list_price_fiscal" widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_template_tree_multicurrency" model="ir.ui.view">
+        <field name="name">product.template.tree.multicurrency</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='list_price']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_list_price_fiscal" widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Injection into Account Product Template Tree View (Accounting app) -->
+    <record id="view_account_product_template_tree_multicurrency" model="ir.ui.view">
+        <field name="name">account.product.template.tree.multicurrency</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="account.product_template_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='list_price']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_list_price_fiscal" widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+    
+    <record id="view_product_product_kanban_multicurrency" model="ir.ui.view">
+        <field name="name">product.product.kanban.multicurrency</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_kanban_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']" position="inside">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+                <div style="position: absolute; bottom: 0; right: 0; background: linear-gradient(135deg, #017e84, #005a5e); color: white; font-weight: bold; padding: 3px 10px; border-top-left-radius: 12px; font-size: 0.85em; box-shadow: -2px -2px 5px rgba(0,0,0,0.15); z-index: 10; pointer-events: none; white-space: nowrap; display: flex; align-items: center; gap: 4px;" title="Total Ref.">
+                    <field name="l10n_ve_ta_multicurrency_list_price_fiscal" widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_product_tree_multicurrency" model="ir.ui.view">
+        <field name="name">product.product.tree.multicurrency</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='lst_price']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="True"/>
+                <field name="l10n_ve_ta_multicurrency_list_price_fiscal" widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_catalog_kanban_multicurrency" model="ir.ui.view">
+        <field name="name">product.catalog.kanban.multicurrency</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_view_kanban_catalog"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='o_kanban_price']" position="after">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+                <div class="mt-1" style="background: linear-gradient(135deg, #017e84, #005a5e); color: white; font-weight: bold; padding: 2px 8px; border-radius: 6px; font-size: 0.85em; display: inline-flex; align-items: center; white-space: nowrap; gap: 4px;" title="Total Ref.">
+                    <field name="l10n_ve_ta_multicurrency_list_price_fiscal" widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_template_form_multicurrency" model="ir.ui.view">
+        <field name="name">product.template.form.multicurrency</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='group_standard_price']" position="inside">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+                <label for="l10n_ve_ta_multicurrency_list_price_fiscal" string="Total Ref." style="font-weight: bold;"/>
+                <div class="o_row" style="display: flex; align-items: center; white-space: nowrap; gap: 4px;">
+                    <field name="l10n_ve_ta_multicurrency_list_price_fiscal" widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}" nolabel="1" class="oe_inline fw-bold"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_product_product_form_multicurrency" model="ir.ui.view">
+        <field name="name">product.product.form.multicurrency</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='group_standard_price']" position="inside">
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+                <label for="l10n_ve_ta_multicurrency_list_price_fiscal" string="Total Ref." style="font-weight: bold;"/>
+                <div class="o_row" style="display: flex; align-items: center; white-space: nowrap; gap: 4px;">
+                    <field name="l10n_ve_ta_multicurrency_list_price_fiscal" widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}" nolabel="1" class="oe_inline fw-bold"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

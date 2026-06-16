@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Guide List View -->
+    <record id="view_l10n_ve_ta_multicurrency_guide_tree" model="ir.ui.view">
+        <field name="name">l10n_ve_ta_multicurrency.guide.list</field>
+        <field name="model">l10n_ve_ta_multicurrency.guide</field>
+        <field name="arch" type="xml">
+            <list string="Guía de Usuario">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Guide Kanban View -->
+    <record id="view_l10n_ve_ta_multicurrency_guide_kanban" model="ir.ui.view">
+        <field name="name">l10n_ve_ta_multicurrency.guide.kanban</field>
+        <field name="model">l10n_ve_ta_multicurrency.guide</field>
+        <field name="arch" type="xml">
+            <kanban create="false" class="o_kanban_mobile">
+                <templates>
+                    <t t-name="card">
+                        <div class="o_kanban_record_top">
+                             <div class="o_kanban_record_headings">
+                                <strong class="o_kanban_record_title"><field name="name"/></strong>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Guide Form View -->
+    <record id="view_l10n_ve_ta_multicurrency_guide_form" model="ir.ui.view">
+        <field name="name">l10n_ve_ta_multicurrency.guide.form</field>
+        <field name="model">l10n_ve_ta_multicurrency.guide</field>
+        <field name="arch" type="xml">
+            <form string="Manual de Usuario" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <div class="mt-4">
+                        <field name="content" widget="html" readonly="1" options="{'style-inline': true}"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Guide -->
+    <record id="action_l10n_ve_ta_multicurrency_guide" model="ir.actions.act_window">
+        <field name="name">Manual de Usuario</field>
+        <field name="res_model">l10n_ve_ta_multicurrency.guide</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            No hay contenido cargado en la guía.
+          </p>
+        </field>
+    </record>
+</odoo>

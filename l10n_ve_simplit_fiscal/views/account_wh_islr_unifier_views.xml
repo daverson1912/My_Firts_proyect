@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Vista de Búsqueda para Unificador ISLR -->
+    <record id="view_wh_islr_unifier_search" model="ir.ui.view">
+        <field name="name">account.wh.islr.unifier.search</field>
+        <field name="model">account.wh.islr</field>
+        <field name="arch" type="xml">
+            <search string="Unificador de Retenciones ISLR">
+                <field name="partner_id" string="Proveedor"/>
+                <field name="name" string="Nº Retención"/>
+                <field name="date" string="Fecha"/>
+                
+                <separator/>
+                <filter string="Borrador" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Publicadas" name="posted" domain="[('state', '=', 'posted')]"/>
+                
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Proveedor" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Mes" name="group_date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    <!-- Vista de Lista para Unificador ISLR -->
+    <record id="view_wh_islr_unifier_tree" model="ir.ui.view">
+        <field name="name">account.wh.islr.unifier.tree</field>
+        <field name="model">account.wh.islr</field>
+        <field name="arch" type="xml">
+            <list string="Unificador de Retenciones ISLR" 
+                  decoration-warning="state == 'draft'" 
+                  decoration-success="state == 'posted'"
+                  create="false"
+                  delete="false">
+                
+                <header>
+                    <button name="action_unify" string="Unificar" type="object" class="oe_highlight"/>
+                </header>
+                
+                <field name="name" string="Comprobante" width="120px"/>
+                <field name="date" string="Fecha" width="100px"/>
+                <field name="partner_id" string="Proveedor" width="200px"/>
+                <field name="move_id" string="Documento" width="150px"/>
+                <field name="amount_total_invoice" string="Monto Documento" width="120px" sum="Total Bruto" optional="show"/>
+                <field name="amount_total_ret" string="Monto Retenido" width="120px" sum="Total Retenido"/>
+                <field name="amount_to_pay" string="Total a Pagar" width="120px" sum="Total Pagar" optional="show"/>
+                <field name="state" string="Estado" widget="badge" 
+                       decoration-warning="state == 'draft'" 
+                       decoration-success="state == 'posted'" 
+                       width="90px"/>
+                
+                <field name="currency_id" column_invisible="1"/>
+                <field name="company_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+    
+    <!-- Acción de Ventana para Unificador ISLR -->
+    <record id="action_wh_islr_unifier" model="ir.actions.act_window">
+        <field name="name">Unificador de Retenciones ISLR</field>
+        <field name="res_model">account.wh.islr</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_wh_islr_unifier_tree"/>
+        <field name="search_view_id" ref="view_wh_islr_unifier_search"/>
+        <field name="domain">[('type', '=', 'purchase')]</field>
+        <field name="context">{
+            'search_default_draft': 1,
+            'group_by': 'partner_id',
+            'default_type': 'purchase',
+        }</field>
+    </record>
+    
+</odoo>

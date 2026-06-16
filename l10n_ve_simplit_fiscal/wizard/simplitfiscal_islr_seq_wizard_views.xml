@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Vista de Formulario del Wizard ISLR -->
+    <record id="view_simplitfiscal_islr_sequence_wizard_form" model="ir.ui.view">
+        <field name="name">simplitfiscal.islr.sequence.wizard.form</field>
+        <field name="model">simplitfiscal.islr.sequence.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Configurar Correlativo de Retenciones ISLR">
+                
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="config_id" invisible="1"/>
+                            
+                            <label for="current_sequence" class="oe_edit_only"/>
+                            <h2>
+                                <field name="current_sequence" readonly="1" 
+                                       class="oe_inline" 
+                                       style="font-family: monospace; color: #875A7B;"/>
+                            </h2>
+                            
+                            <field name="sequence_number" 
+                                   placeholder="Ingrese el número secuencial..."/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Información" name="info">
+                            <group>
+                                <group string="Formato Sugerido">
+                                    <p style="color: #555;">
+                                        El correlativo sugerido tiene <strong>10 dígitos</strong> continuos:
+                                    </p>
+                                    <ul>
+                                        <li><strong>AAAA</strong>: Año del período (calculado automáticamente)</li>
+                                        <li><strong>SSSSSS</strong>: Número secuencial de 6 dígitos (editable)</li>
+                                    </ul>
+                                </group>
+                                
+                                <group string="Ejemplo">
+                                    <p style="font-family: monospace; font-size: 14px;">
+                                        <strong>2026000001</strong>
+                                    </p>
+                                    <ul style="color: #666;">
+                                        <li>2026 = Año</li>
+                                        <li>000001 = Primer comprobante</li>
+                                    </ul>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                
+                <footer>
+                    <button name="action_save_sequence" 
+                            string="Guardar" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button name="action_reset_sequence" 
+                            string="Iniciar de Cero" 
+                            type="object" 
+                            class="btn-secondary"
+                            confirm="¿Está seguro que desea resetear el correlativo ISLR a 1?"/>
+                    <button string="Cancelar" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+                
+            </form>
+        </field>
+    </record>
+    
+</odoo>

@@ -1,0 +1,214 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_ve_ta_multicurrency
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-30 00:00+0000\n"
+"PO-Revision-Date: 2024-10-30 00:00+0000\n"
+"Last-Translator: Antigravity <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Antigravity\n"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.module.module,name:l10n_ve_ta_multicurrency.module_l10n_ve_ta_multicurrency
+msgid "Venezuela Multicurrency"
+msgstr "Multimoneda Venezuela"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.module.module,summary:l10n_ve_ta_multicurrency.module_l10n_ve_ta_multicurrency
+msgid "Advanced multicurrency and tax management for Venezuela."
+msgstr "Gestión avanzada de multimoneda e impuestos para Venezuela."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_applied_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_applied_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_applied_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_asset__l10n_ve_ta_multicurrency_applied_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_loan__l10n_ve_ta_multicurrency_applied_rate
+msgid "Applied Rate"
+msgstr "Tasa Aplicada"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_fiscal_id
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_fiscal_id
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_fiscal_id
+msgid "Ref. Currency"
+msgstr "Moneda Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_taxable_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_taxable_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_taxable_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move_line__l10n_ve_ta_multicurrency_taxable_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order_line__l10n_ve_ta_multicurrency_taxable_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order_line__l10n_ve_ta_multicurrency_taxable_amount
+msgid "Taxable Ref."
+msgstr "Gravable Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_exempt_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_exempt_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_exempt_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move_line__l10n_ve_ta_multicurrency_exempt_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order_line__l10n_ve_ta_multicurrency_exempt_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order_line__l10n_ve_ta_multicurrency_exempt_amount
+msgid "Exempt Ref."
+msgstr "Monto Exento Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_discount_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_discount_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_discount_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move_line__l10n_ve_ta_multicurrency_discount_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order_line__l10n_ve_ta_multicurrency_discount_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order_line__l10n_ve_ta_multicurrency_discount_amount
+msgid "Discount Ref."
+msgstr "Descuento Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_tax_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_tax_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_tax_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move_line__l10n_ve_ta_multicurrency_tax_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order_line__l10n_ve_ta_multicurrency_tax_amount
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order_line__l10n_ve_ta_multicurrency_tax_amount
+msgid "Tax Ref."
+msgstr "Impuesto Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_total_amount_ref
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_total_amount_ref
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_total_amount_ref
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_payment__l10n_ve_ta_multicurrency_amount_ref
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_batch_payment__l10n_ve_ta_multicurrency_amount_ref
+msgid "Total Ref."
+msgstr "Total Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move_line__l10n_ve_ta_multicurrency_price_unit
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order_line__l10n_ve_ta_multicurrency_price_unit
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order_line__l10n_ve_ta_multicurrency_price_unit
+msgid "Unit Price Ref."
+msgstr "Precio Unitario Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move_line__l10n_ve_ta_multicurrency_subtotal_ref
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order_line__l10n_ve_ta_multicurrency_total_amount_ref
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order_line__l10n_ve_ta_multicurrency_total_amount_ref
+msgid "Subtotal Ref."
+msgstr "Subtotal Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move_line__l10n_ve_ta_multicurrency_debit_amount
+msgid "Debit Ref."
+msgstr "Débito Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move_line__l10n_ve_ta_multicurrency_credit_amount
+msgid "Credit Ref."
+msgstr "Crédito Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_use_manual_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_use_manual_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_use_manual_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_payment__l10n_ve_ta_multicurrency_use_manual_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_payment_register__l10n_ve_ta_multicurrency_use_manual_rate
+msgid "Use Manual Rate"
+msgstr "Usar Tasa Manual"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_move__l10n_ve_ta_multicurrency_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_sale_order__l10n_ve_ta_multicurrency_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_purchase_order__l10n_ve_ta_multicurrency_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_payment__l10n_ve_ta_multicurrency_rate
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_payment_register__l10n_ve_ta_multicurrency_rate
+msgid "Exchange Rate"
+msgstr "Tasa de Cambio"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_res_currency__l10n_ve_ta_multicurrency_is_fiscal
+msgid "Reference Currency"
+msgstr "Moneda de Referencia"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_res_currency__l10n_ve_ta_multicurrency_is_locked
+msgid "Locked"
+msgstr "Bloqueado"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_asset__l10n_ve_ta_multicurrency_original_value_ref
+msgid "Total Original Ref."
+msgstr "Valor Original Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_asset__l10n_ve_ta_multicurrency_book_value_ref
+msgid "Book Value Ref."
+msgstr "Valor Contable Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_asset__l10n_ve_ta_multicurrency_value_residual_ref
+msgid "Depreciable Value Ref."
+msgstr "Valor Depreciable Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_loan__l10n_ve_ta_multicurrency_amount_borrowed_ref
+msgid "Amount Borrowed Ref."
+msgstr "Monto Prestado Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.model.fields,field_description:l10n_ve_ta_multicurrency.field_account_loan__l10n_ve_ta_multicurrency_outstanding_balance_ref
+msgid "Outstanding Balance Ref."
+msgstr "Saldo Pendiente Ref."
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.actions.act_window,name:l10n_ve_ta_multicurrency.action_multicurrency_dashboard
+msgid "Resumen de Tasas"
+msgstr "Resumen de Tasas"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.actions.act_window,name:l10n_ve_ta_multicurrency.action_l10n_ve_ta_multicurrency_api_config
+msgid "Configuracion Automatica Tasa BCV"
+msgstr "Configuracion Automatica Tasa BCV"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.actions.act_window,name:l10n_ve_ta_multicurrency.action_l10n_ve_ta_multicurrency_guide
+msgid "Manual de Usuario"
+msgstr "Manual de Usuario"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.ui.menu,name:l10n_ve_ta_multicurrency.menu_multicurrency_root
+msgid "Multimoneda VE"
+msgstr "Multimoneda VE"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.ui.menu,name:l10n_ve_ta_multicurrency.menu_multicurrency_dashboard
+msgid "Resumen"
+msgstr "Resumen"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.ui.menu,name:l10n_ve_ta_multicurrency.menu_multicurrency_config_group
+msgid "Configuración"
+msgstr "Configuración"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.ui.menu,name:l10n_ve_ta_multicurrency.menu_multicurrency_api_config
+msgid "Configuracion Automatica Tasa BCV"
+msgstr "Configuracion Automatica Tasa BCV"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.ui.menu,name:l10n_ve_ta_multicurrency.menu_multicurrency_res_currency
+msgid "Monedas"
+msgstr "Monedas"
+
+#. module: l10n_ve_ta_multicurrency
+#: model:ir.ui.menu,name:l10n_ve_ta_multicurrency.menu_multicurrency_guide
+msgid "Guía de Usuario"
+msgstr "Guía de Usuario"

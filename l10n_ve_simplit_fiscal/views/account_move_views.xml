@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Vista heredada de Factura de Proveedor para mostrar etiqueta de retención -->
+    <record id="view_move_form_inherit_l10n_ve_fiscal" model="ir.ui.view">
+        <field name="name">account.move.form.inherit.l10n.ve.fiscal</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Agregar smart button de comprobantes de retención -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" 
+                        type="object" 
+                        name="action_view_withholding_vouchers"
+                        icon="fa-file-text-o"
+                        invisible="l10n_ve_wh_iva_count == 0 or move_type not in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund')">
+                    <field name="l10n_ve_wh_iva_count" widget="statinfo" string="Ret. IVA"/>
+                </button>
+                <button class="oe_stat_button" 
+                        type="object" 
+                        name="action_view_islr_withholding"
+                        icon="fa-money"
+                        invisible="l10n_ve_wh_islr_count == 0 or move_type not in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund')">
+                    <field name="l10n_ve_wh_islr_count" widget="statinfo" string="Ret. ISLR"/>
+                </button>
+            </xpath>
+            
+            <!-- Agregar badge de retención al lado del nombre del proveedor -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <!-- Campos ocultos -->
+                <field name="l10n_ve_partner_retention_type" invisible="1"/>
+                <field name="l10n_ve_wh_iva_state" invisible="1"/>
+                <field name="l10n_ve_islr_amount" invisible="1" force_save="1"/>
+                <field name="l10n_ve_wh_islr_state" invisible="1"/>
+                
+                <div invisible="not l10n_ve_islr_provider_type_id or move_type not in ('in_invoice', 'in_refund')" 
+                     style="margin-top: 8px;">
+                    <span class="fw-bold me-2">Beneficiario de Pago:</span>
+                    <field name="l10n_ve_islr_provider_type_id" readonly="1"/>
+                </div>
+
+                <div invisible="not l10n_ve_partner_retention_type or move_type not in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund')" 
+                     style="margin-top: 4px;">
+                    <span class="fw-bold me-2">Retencion IVA:</span>
+                    
+                    <!-- Badge de porcentaje -->
+                    <span class="badge rounded-pill text-bg-success me-2" 
+                          invisible="l10n_ve_partner_retention_type != '75'">
+                        75 %
+                    </span>
+                    <span class="badge rounded-pill text-bg-success me-2" 
+                          invisible="l10n_ve_partner_retention_type != '100'">
+                        100 %
+                    </span>
+                    
+                    <!-- Separador y estado -->
+                    <span invisible="not l10n_ve_wh_iva_state" class="text-muted me-2">|</span>
+                    <span invisible="not l10n_ve_wh_iva_state" class="me-1">Estado:</span>
+                    
+                    <!-- Badge de estado -->
+                    <span class="badge rounded-pill text-bg-warning" 
+                          invisible="l10n_ve_wh_iva_state != 'draft'">
+                        <i class="fa fa-clock-o"/> RET S/P
+                    </span>
+                    <span class="badge rounded-pill text-bg-success" 
+                          invisible="l10n_ve_wh_iva_state != 'posted'">
+                        <i class="fa fa-check"/> RET P
+                    </span>
+                    <span class="badge rounded-pill text-bg-info" 
+                          invisible="l10n_ve_wh_iva_state != 'declared'">
+                        <i class="fa fa-check-square-o"/> RET D
+                    </span>
+                </div>
+
+                <!-- Nuevo: Badge de ISLR -->
+                <div invisible="l10n_ve_islr_amount == 0 or move_type not in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund')" 
+                     style="margin-top: 4px;">
+                    <span class="fw-bold me-2">Retencion ISLR:</span>
+                    
+                    <!-- Separador y estado -->
+                    <span invisible="not l10n_ve_wh_islr_state" class="text-muted me-2">|</span>
+                    <span invisible="not l10n_ve_wh_islr_state" class="me-1">Estado:</span>
+                    
+                    <!-- Badge de estado -->
+                    <span class="badge rounded-pill text-bg-warning" 
+                          invisible="l10n_ve_wh_islr_state != 'draft'">
+                        <i class="fa fa-clock-o"/> RET S/P
+                    </span>
+                    <span class="badge rounded-pill text-bg-success" 
+                          invisible="l10n_ve_wh_islr_state != 'posted'">
+                        <i class="fa fa-check"/> RET P
+                    </span>
+                    <span class="badge rounded-pill text-bg-info" 
+                          invisible="l10n_ve_wh_islr_state != 'declared'">
+                        <i class="fa fa-check-square-o"/> RET D
+                    </span>
+                </div>
+            </xpath>
+
+            <!-- Agregar Número de Control y Campos Fiscales de Venta -->
+            <xpath expr="//field[@name='ref']" position="after">
+                <field name="l10n_ve_control_number"
+                       readonly="state != 'draft'"
+                       invisible="move_type not in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund')"
+                       required="move_type in ('in_invoice', 'in_refund') and country_code == 'VE'"/>
+                <field name="l10n_ve_supplier_invoice_number"
+                       invisible="move_type not in ('in_invoice', 'in_refund')"
+                       required="move_type in ('in_invoice', 'in_refund') and country_code == 'VE'"/>
+                
+                <!-- Campos de Venta / IGTF / Impresora Fiscal -->
+                <field name="l10n_ve_has_igtf" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="l10n_ve_igtf_amount" invisible="not l10n_ve_has_igtf or move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="l10n_ve_igtf_percentage" invisible="not l10n_ve_has_igtf or move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="l10n_ve_fiscal_invoice_number" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="l10n_ve_fiscal_z_number" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="l10n_ve_fiscal_printer_serial" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            </xpath>
+
+            <!-- Reorganización del Pie de Página (Totales) -->
+            <xpath expr="//field[@name='tax_totals']" position="after">
+                <field name="l10n_ve_amount_to_pay"
+                       string="Cantidad por pagar"
+                       class="oe_subtotal_footer_separator"
+                       invisible="l10n_ve_show_summary or move_type not in ('in_invoice', 'in_refund')"
+                       widget="monetary"/>
+            </xpath>
+
+            <!-- Ocultar tax_totals nativo cuando el resumen fiscal está activo -->
+            <xpath expr="//group[hasclass('oe_subtotal_footer')]/field[@name='tax_totals']" position="attributes">
+                <attribute name="invisible">l10n_ve_show_summary</attribute>
+            </xpath>
+
+            <!-- Resumen fiscal: Gravable → Exento → Descuento → Subtotal → IVA → Total → Ret.IVA → Ret.ISLR → Monto a Pagar -->
+            <xpath expr="//field[@name='l10n_ve_amount_to_pay']" position="before">
+                <field name="l10n_ve_show_summary" invisible="1"/>
+
+                <field name="l10n_ve_doc_taxable_amount" string="Gravable"
+                       invisible="not l10n_ve_show_summary"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_exempt_amount" string="Exento"
+                       invisible="not l10n_ve_show_summary"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_discount_amount" string="Descuento"
+                       invisible="not l10n_ve_show_summary"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_subtotal" string="Subtotal"
+                       invisible="not l10n_ve_show_summary"
+                       class="oe_subtotal_footer_separator" decoration-bf="1"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_gross_iva" string="IVA"
+                       invisible="not l10n_ve_show_summary"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_total" string="Total"
+                       invisible="not l10n_ve_show_summary"
+                       class="oe_subtotal_footer_separator" decoration-bf="1"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_ret_iva" string="Ret. IVA"
+                       invisible="not l10n_ve_show_summary or l10n_ve_doc_ret_iva == 0"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_ret_islr" string="Ret. ISLR"
+                       invisible="not l10n_ve_show_summary or l10n_ve_doc_ret_islr == 0"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_amount_to_pay" string="Monto a Pagar"
+                       invisible="not l10n_ve_show_summary or (l10n_ve_doc_ret_iva == 0 and l10n_ve_doc_ret_islr == 0)"
+                       class="oe_subtotal_footer_separator" decoration-bf="1"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
+            </xpath>
+
+            <!-- Ocultar el "Amount Due" estándar para evitar duplicidad y cálculos confusos -->
+            <xpath expr="//field[@name='amount_residual']" position="attributes">
+                <attribute name="invisible">state == 'draft' or move_type in ('in_invoice', 'in_refund')</attribute>
+            </xpath>
+
+            <!-- Nueva pestaña con el detalle de ISLR para mayor limpieza visual -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Lineas ISLR" name="islr_lines_tab" invisible="move_type not in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund') or l10n_ve_islr_amount == 0">
+                    <field name="invoice_line_ids" readonly="1" force_save="1">
+                        <list create="0" delete="0" edit="0">
+                            <field name="product_id" string="Producto"/>
+                            <field name="price_subtotal" string="Base Imponible"/>
+                            <field name="l10n_ve_islr_fiscal_code" 
+                                   string="Codigo"
+                                   decoration-warning="l10n_ve_islr_amount_line > 0"/>
+                            <field name="l10n_ve_islr_subject_amount_display" 
+                                   string="Base de la retención"
+                                   decoration-warning="l10n_ve_islr_amount_line > 0"/>
+                            <field name="l10n_ve_islr_retention_calculation_display" 
+                                   string="Calc. Imp"
+                                   decoration-warning="l10n_ve_islr_amount_line > 0"/>
+                            <field name="l10n_ve_islr_subtrahend" 
+                                   string="Sustraendo"
+                                   decoration-warning="l10n_ve_islr_amount_line > 0"/>
+                            <field name="l10n_ve_islr_amount_line" 
+                                   string="Monto Retenido"
+                                   decoration-danger="l10n_ve_islr_amount_line > 0"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+    
+</odoo>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_wh_islr_form_multicurrency" model="ir.ui.view">
+        <field name="name">account.wh.islr.form.multicurrency</field>
+        <field name="model">account.wh.islr</field>
+        <field name="inherit_id" ref="l10n_ve_simplit_fiscal.view_account_wh_islr_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='amounts_left']/field[@name='amount_total_invoice']" position="after">
+                <field name="l10n_ve_ta_multicurrency_total_invoice" string="Monto del Documento (Ref.)"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+
+            <xpath expr="//group[@name='amounts_left']/field[@name='amount_taxable_base']" position="after">
+                <field name="l10n_ve_ta_multicurrency_taxable_base" string="Base Imponible (Ref.)"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+
+            <xpath expr="//group[@name='amounts_left']/field[@name='amount_exempt']" position="after">
+                <field name="l10n_ve_ta_multicurrency_exempt" string="Monto Exento (Ref.)"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+
+            <xpath expr="//group[@name='amounts_right']/field[@name='amount_total_ret']" position="after">
+                <field name="l10n_ve_ta_multicurrency_amount_total_ret" string="Total Retenido (Ref.)"
+                       class="oe_subtotal_footer_separator"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+            </xpath>
+
+            <xpath expr="//group[@name='amounts_right']/field[@name='amount_to_pay']" position="after">
+                <field name="l10n_ve_ta_multicurrency_amount_to_pay" string="Monto a Pagar (Ref.)"
+                       decoration-bf="1"
+                       widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"/>
+                <field name="l10n_ve_ta_multicurrency_fiscal_id" invisible="1"/>
+            </xpath>
+
+
+
+            <xpath expr="//notebook" position="inside">
+                <page string="DETALLE DE RETENCIÓN (Ref.)" name="detail_ref_company">
+                    <field name="line_ids">
+                        <list edit="0" create="0" delete="0">
+                            <field name="product_id"/>
+                            <field name="move_line_id" string="Ítem Factura" optional="hide"/>
+                            <field name="concept_id"/>
+                            <field name="fiscal_code" string="Codigo"/>
+                            <field name="l10n_ve_ta_multicurrency_base_amount" string="Base Imponible (Ref.)"
+                                   widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                                   sum="Total Bruto Ref."/>
+                            <field name="l10n_ve_ta_multicurrency_subject_amount" string="Monto Sujeto (Ref.)"
+                                   widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                                   sum="Total Sujeto Ref."/>
+                            <field name="l10n_ve_ta_multicurrency_base_retention_amount" string="Base Retención (Ref.)"
+                                   widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                                   sum="Total Base Retención Ref."/>
+                            <field name="l10n_ve_ta_multicurrency_subject_amount_display" string="Base de la retención"/>
+                            <field name="l10n_ve_ta_multicurrency_retention_calculation_display" string="Calc. Imp"/>
+                            <field name="l10n_ve_ta_multicurrency_subtrahend" string="Sustraendo (Ref.)"
+                                   widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                                   sum="Total Sustraendo Ref."/>
+                            <field name="l10n_ve_ta_multicurrency_retention_amount" string="Monto Retenido (Ref.)"
+                                   widget="monetary" options="{'currency_field': 'l10n_ve_ta_multicurrency_fiscal_id'}"
+                                   sum="Total Retenido Ref."/>
+                            <field name="l10n_ve_ta_multicurrency_fiscal_id" column_invisible="1"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_move_form_tafel" model="ir.ui.view">
+        <field name="name">account.move.form.tafel</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='narration']" position="after">
+                <div class="alert alert-warning mb-0" role="alert"
+                     invisible="not l10n_ve_control_number or move_type not in ('out_invoice', 'out_refund')">
+                    <strong>Factura con control fiscal emitido.</strong>
+                    Los campos críticos (cliente, líneas, moneda, diario, fecha) son de solo lectura.
+                </div>
+                <group string="Facturación Electrónica"
+                       invisible="not l10n_ve_control_number and not digital_document">
+                    <field name="l10n_ve_control_number" readonly="1"/>
+                    <field name="digital_document" readonly="1" invisible="1"/>
+                    <button name="action_view_digital_document"
+                            type="object"
+                            string="Ver Documento Digital"
+                            class="btn btn-link p-0"
+                            icon="fa-external-link"
+                            invisible="not digital_document"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//field[@name='partner_id'][@widget='res_partner_many2one']"
+                   position="attributes">
+                <attribute name="readonly">l10n_ve_control_number and move_type in ('out_invoice', 'out_refund')</attribute>
+            </xpath>
+
+            <xpath expr="//page[@id='invoice_tab']//field[@name='invoice_line_ids']"
+                   position="attributes">
+                <attribute name="readonly">l10n_ve_control_number and move_type in ('out_invoice', 'out_refund')</attribute>
+            </xpath>
+
+            <xpath expr="//div[@name='currency_div']//field[@name='currency_id']"
+                   position="attributes">
+                <attribute name="readonly">l10n_ve_control_number and move_type in ('out_invoice', 'out_refund')</attribute>
+            </xpath>
+
+            <xpath expr="//group[@id='header_right_group']//field[@name='invoice_date']"
+                   position="attributes">
+                <attribute name="readonly">l10n_ve_control_number and move_type in ('out_invoice', 'out_refund')</attribute>
+            </xpath>
+
+            <xpath expr="//div[@name='journal_div']//field[@name='journal_id']"
+                   position="attributes">
+                <attribute name="readonly">l10n_ve_control_number and move_type in ('out_invoice', 'out_refund')</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

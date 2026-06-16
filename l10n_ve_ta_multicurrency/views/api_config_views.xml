@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Simplit API Config List View -->
+    <record id="view_l10n_ve_ta_multicurrency_api_config_tree" model="ir.ui.view">
+        <field name="name">l10n_ve_ta_multicurrency.api.config.list</field>
+        <field name="model">l10n_ve_ta_multicurrency.api.config</field>
+        <field name="arch" type="xml">
+            <list string="Configuracion Automatica Tasa BCV">
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="l10n_ve_ta_multicurrency_last_rate" string="Tasa Actual"/>
+                <field name="l10n_ve_ta_multicurrency_last_sync_date" string="Última Fecha"/>
+                <field name="l10n_ve_ta_multicurrency_enable_sync" widget="boolean_toggle" string="Sincronización Activa"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Simplit API Config Form View (Dashboard Style) -->
+    <record id="view_l10n_ve_ta_multicurrency_api_config_form" model="ir.ui.view">
+        <field name="name">l10n_ve_ta_multicurrency.api.config.form</field>
+        <field name="model">l10n_ve_ta_multicurrency.api.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuracion Automatica Tasa BCV" create="false" delete="false">
+                <sheet>
+                    <div class="alert alert-info shadow-sm" role="alert" style="border-left: 5px solid #0dcaf0;">
+                        <h4 class="alert-heading"><i class="fa fa-info-circle me-2"/> Sincronización Automática BCV</h4>
+                        <p class="mb-0">Al activar esta opción, el sistema consultará diariamente al <strong>Banco Central de Venezuela</strong> para mantener sus tasas actualizadas automáticamente.</p>
+                    </div>
+
+                    <!-- GUIA DE CONFIGURACION BIMONETARIA (Movida al tope para mejor visibilidad) -->
+                    <div class="mt-4 mb-5 pb-4 border-bottom">
+                        <h4 class="text-dark mb-4 fw-bold"><i class="fa fa-book text-primary me-2"/> Guía de Configuración Rápida</h4>
+                        
+                        <div class="alert alert-warning shadow-sm mb-4" role="alert" style="border-left: 5px solid #ffc107;">
+                            <h5 class="alert-heading fw-bold mb-2"><i class="fa fa-exclamation-triangle me-2"/> ¡Aviso Importante sobre la Configuración!</h5>
+                            <p class="mb-0">Para aplicar la configuración de <strong>Multiplicar</strong> o <strong>Dividir</strong>, debe dirigirse al menú de <strong>Monedas</strong>. Busque la moneda deseada (ej. USD o VES), haga clic en ella para entrar a su formulario, y configure la <em>Moneda Referencial</em> y la <em>Operación</em> correcta según su caso:</p>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm" style="background: #f8f9fa; border-left: 4px solid #0d6efd !important;">
+                                    <div class="card-body py-3">
+                                        <h6 class="card-title fw-bold text-primary mb-2">Contabilidad en Bs. (VES)</h6>
+                                        <p class="card-text text-muted x-small mb-2">Para ver reportes gerenciales en USD.</p>
+                                        <ul class="list-unstyled x-small mb-0">
+                                            <li><i class="fa fa-caret-right text-primary me-1"/> <strong>Operación:</strong> Dividir</li>
+                                            <li><i class="fa fa-caret-right text-primary me-1"/> <strong>Ref. en Reporte:</strong> USD</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 border-0 shadow-sm" style="background: #f8f9fa; border-left: 4px solid #6f42c1 !important;">
+                                    <div class="card-body py-3">
+                                        <h6 class="card-title fw-bold mb-2" style="color: #6f42c1;">Contabilidad en Dólares (USD)</h6>
+                                        <p class="card-text text-muted x-small mb-2">Para cumplir con libros fiscales en VES.</p>
+                                        <ul class="list-unstyled x-small mb-0">
+                                            <li><i class="fa fa-caret-right me-1" style="color: #6f42c1;"/> <strong>Operación:</strong> Multiplicar</li>
+                                            <li><i class="fa fa-caret-right me-1" style="color: #6f42c1;"/> <strong>Ref. en Reporte:</strong> VES</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-5 mb-5 align-items-center">
+                        <div class="col-12 col-md-4 text-center border-end">
+                            <span class="text-muted d-block text-uppercase small fw-bold mb-2">Estado de Sincronización</span>
+                            <field name="l10n_ve_ta_multicurrency_enable_sync" widget="boolean_toggle" class="fs-1"/>
+                            <p class="text-muted small mt-2" invisible="l10n_ve_ta_multicurrency_enable_sync">Sincronización Desactivada</p>
+                            <p class="text-success small mt-2 fw-bold" invisible="not l10n_ve_ta_multicurrency_enable_sync">Sincronización Activa</p>
+                            <div class="mt-4 text-start">
+                                <span class="text-muted d-block text-uppercase small fw-bold mb-1">Integración Fiscal:</span>
+                                <field name="l10n_ve_ta_multicurrency_enable_fiscal" widget="boolean_toggle"/>
+                                <p class="text-muted extra-small mt-1">Habilitar desgloses de retenciones en moneda de referencia y libros de IVA en Bs.</p>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 text-center border-end">
+                            <span class="text-muted d-block text-uppercase small fw-bold mb-2">Tasa Oficial Actual</span>
+                            <h1 class="display-5 fw-bold text-dark">
+                                <field name="l10n_ve_ta_multicurrency_last_rate" readonly="1" options="{'digits': [12, 4]}"/>
+                                <span class="fs-4 ms-1">Bs.</span>
+                            </h1>
+                        </div>
+                        <div class="col-6 col-md-4 text-center">
+                            <span class="text-muted d-block text-uppercase small fw-bold mb-2">Última Actualización BCV</span>
+                            <div class="text-primary mt-2 small fw-bold">
+                                <field name="l10n_ve_ta_multicurrency_last_api_update" readonly="1" force_save="1"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 pt-4 border-top text-center" invisible="not l10n_ve_ta_multicurrency_enable_sync">
+                        <button name="action_sync_now" type="object" string="Sincronizar Ahora" 
+                                class="btn btn-primary btn-lg px-5 py-3 shadow" icon="fa-refresh">
+                        </button>
+                        <p class="text-muted small mt-3">
+                            <i class="fa fa-clock-o me-1"/> El sistema se sincroniza automáticamente cada noche. Use este botón para forzar una actualización ahora.
+                        </p>
+                    </div>
+
+
+
+                    <notebook groups="base.group_no_one">
+                        <page name="technical" string="Configuración Técnica">
+                            <group>
+                                <field name="l10n_ve_ta_multicurrency_api_url"/>
+                                <field name="l10n_ve_ta_multicurrency_guid" password="True"/>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                                <field name="active" widget="boolean_toggle"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>
