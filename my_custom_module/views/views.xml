@@ -2,22 +2,22 @@
 <odoo>
     <!-- Vista de Lista (Tree View) -->
     <record id="view_my_custom_model_tree" model="ir.ui.view">
-        <name>my_custom.model.tree</name>
-        <model>my_custom.model</model>
-        <arch type="xml">
+        <field name="name">my_custom.model.tree</field>
+        <field name="model">my_custom.model</field>
+        <field name="arch" type="xml">
             <list string="Modelos Personalizados">
                 <field name="name"/>
                 <field name="description"/>
                 <field name="active"/>
             </list>
-        </arch>
+        </field>
     </record>
 
     <!-- Vista de Formulario (Form View) -->
     <record id="view_my_custom_model_form" model="ir.ui.view">
-        <name>my_custom.model.form</name>
-        <model>my_custom.model</model>
-        <arch type="xml">
+        <field name="name">my_custom.model.form</field>
+        <field name="model">my_custom.model</field>
+        <field name="arch" type="xml">
             <form string="Modelo Personalizado">
                 <sheet>
                     <group>
@@ -27,19 +27,19 @@
                     </group>
                 </sheet>
             </form>
-        </arch>
+        </field>
     </record>
 
     <!-- Acción de Ventana (Window Action) -->
     <record id="action_my_custom_model" model="ir.actions.act_window">
-        <name>Mi Modelo Personalizado</name>
-        <res_model>my_custom.model</res_model>
-        <view_mode>list,form</view_mode>
-        <help type="html">
+        <field name="name">Mi Modelo Personalizado</field>
+        <field name="res_model">my_custom.model</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Crea el primer registro personalizado.
             </p>
-        </help>
+        </field>
     </record>
 
     <!-- Menús de Acceso -->
