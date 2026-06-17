@@ -9,6 +9,7 @@
                 <field name="name"/>
                 <field name="description"/>
                 <field name="comentario"/>
+                <field name="fecha_registro"/>
                 <field name="active"/>
             </list>
         </field>
@@ -25,6 +26,7 @@
                         <field name="name"/>
                         <field name="description"/>
                         <field name="comentario"/>
+                        <field name="fecha_registro"/>
                         <field name="active"/>
                     </group>
                 </sheet>

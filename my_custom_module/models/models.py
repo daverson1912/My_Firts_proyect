@@ -9,3 +9,4 @@ class MyCustomModel(models.Model):
     description = fields.Text(string='Descripción')
     active = fields.Boolean(string='Activo', default=True)
     comentario = fields.Char(string='Comentario de Prueba')
+    fecha_registro = fields.Date(string='Fecha de Registro', default=fields.Date.context_today)
