@@ -8,6 +8,7 @@
             <list string="Modelos Personalizados">
                 <field name="name"/>
                 <field name="description"/>
+                <field name="comentario"/>
                 <field name="active"/>
             </list>
         </field>
@@ -23,6 +24,7 @@
                     <group>
                         <field name="name"/>
                         <field name="description"/>
+                        <field name="comentario"/>
                         <field name="active"/>
                     </group>
                 </sheet>
