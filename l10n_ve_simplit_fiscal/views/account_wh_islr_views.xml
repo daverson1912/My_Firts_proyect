@@ -9,20 +9,38 @@
         <field name="arch" type="xml">
             <form string="Comprobante de Retención de ISLR">
                 <header>
-                    <button name="action_process_withholding" 
-                            string="Procesar Retención" 
-                            type="object" 
+                    <button name="action_process_withholding"
+                            string="Editar Retención"
+                            type="object"
                             class="btn-primary"
                             invisible="state != 'draft'"
                             groups="account.group_account_manager"/>
-                    <button name="action_print_retention" 
-                            string="Imprimir Comprobante" 
-                            type="object" 
+                    <button name="action_enable_detail_edit"
+                            string="Modificar Montos del Detalle"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="edit_detail_mode or state not in ('draft','posted')"
+                            groups="account.group_account_manager"/>
+                    <button name="action_apply_detail_changes"
+                            string="Aplicar Cambios"
+                            type="object"
+                            class="btn-primary"
+                            invisible="not edit_detail_mode"
+                            groups="account.group_account_manager"/>
+                    <button name="action_reset_to_draft"
+                            string="Volver a Borrador"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="state != 'posted' or type != 'purchase'"
+                            groups="account.group_account_manager"/>
+                    <button name="action_print_retention"
+                            string="Imprimir Comprobante"
+                            type="object"
                             invisible="state == 'draft' or type != 'purchase'"
                             groups="account.group_account_manager"/>
-                    <button name="action_retry_email" 
-                            string="Reintentar Envío" 
-                            type="object" 
+                    <button name="action_retry_email"
+                            string="Reintentar Envío"
+                            type="object"
                             class="btn-secondary"
                             icon="fa-refresh"
                             invisible="email_state != 'failed'"
@@ -30,18 +48,26 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,posted,declared"/>
                 </header>
                 <sheet>
+                    <!-- Correlativos ISLR (solo compras) -->
+                    <group invisible="type != 'purchase'" class="o_inner_group">
+                        <group string="Correlativos ISLR">
+                            <field name="next_correlative" readonly="1" string="Próximo Correlativo"/>
+                        </group>
+                    </group>
+
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Número de Comprobante" readonly="1"/>
                         </h1>
                     </div>
-                    
+
                     <group>
                         <group name="main_info">
                             <field name="partner_id" options="{'no_create': True}"/>
                             <field name="partner_vat"/>
-                            <field name="date"/>
+                            <field name="date" readonly="state in ('declared', 'cancel')"/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="edit_detail_mode" invisible="1"/>
                         </group>
                         <group name="extra_info">
                             <field name="company_id" groups="base.group_multi_company" readonly="1"/>
@@ -74,15 +100,23 @@
                     
                     <notebook>
                         <page string="DETALLE DE RETENCIÓN" name="detail">
-                            <field name="line_ids">
-                                <list edit="0" create="0">
-                                    <field name="product_id"/>
-                                    <field name="move_line_id" string="Ítem Factura" optional="hide"/>
-                                    <field name="concept_id"/>
-                                    <field name="fiscal_code" string="Codigo"/>
-                                    <field name="base_amount" string="Base Imponible" sum="Total Bruto"/>
-                                    <field name="subject_amount_display" string="Base de la retención"/>
-                                    <field name="retention_calculation_display" string="Calc. Imp"/>
+                            <div class="alert alert-warning mb-2" role="alert" invisible="not edit_detail_mode">
+                                <strong>✏️ Modo edición activo.</strong>
+                                Modifique los campos directamente en la tabla. El <strong>Total Retenido</strong> se actualizará automáticamente al guardar cada línea. Al terminar, haga clic en <strong>Aplicar Cambios</strong> para confirmar y registrar en contabilidad.
+                            </div>
+                            <field name="line_ids" readonly="not edit_detail_mode">
+                                <list create="0" delete="0">
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="move_line_id" string="Ítem Factura" optional="hide" readonly="1"/>
+                                    <field name="concept_id" readonly="1"/>
+                                    <field name="fiscal_code" string="Código"/>
+                                    <field name="base_amount" string="Base Imponible" readonly="1" sum="Total Bruto"/>
+                                    <!-- Columnas modo lectura -->
+                                    <field name="subject_amount_display" string="Base de la retención" column_invisible="parent.edit_detail_mode"/>
+                                    <field name="retention_calculation_display" string="Calc. Imp" column_invisible="parent.edit_detail_mode"/>
+                                    <!-- Columnas modo edición -->
+                                    <field name="subject_amount_percentage" string="% Base Sujeta" column_invisible="not parent.edit_detail_mode"/>
+                                    <field name="retention_percentage" string="% Retención" column_invisible="not parent.edit_detail_mode"/>
                                     <field name="subtrahend" string="Sustraendo" sum="Total Sustraendo"/>
                                     <field name="retention_amount" string="Monto Retenido" sum="Total Retenido"/>
                                     <field name="currency_id" column_invisible="1"/>
@@ -92,13 +126,15 @@
                                         <group>
                                             <field name="product_id" readonly="1"/>
                                             <field name="move_line_id" readonly="1"/>
-                                            <field name="concept_id"/>
+                                            <field name="concept_id" readonly="1"/>
                                             <field name="fiscal_code"/>
-                                            <field name="retention_calculation_display"/>
+                                            <field name="subject_amount_percentage" string="% Base Sujeta"/>
+                                            <field name="retention_percentage" string="% Retención"/>
                                         </group>
                                         <group>
-                                            <field name="base_amount" string="Base Imponible"/>
-                                            <field name="subject_amount_display"/>
+                                            <field name="base_amount" string="Base Imponible" readonly="1"/>
+                                            <field name="subject_amount_display" string="Base Retención (display)" readonly="1"/>
+                                            <field name="retention_calculation_display" string="Calc. Imp (display)" readonly="1"/>
                                             <field name="subtrahend"/>
                                             <field name="retention_amount"/>
                                         </group>
@@ -107,11 +143,11 @@
                             </field>
                         </page>
                     </notebook>
-                    
+
                     <div class="alert alert-info" role="alert" invisible="state != 'draft'">
                          <p><strong>ℹ️ Comprobante en Borrador</strong></p>
-                         <p>Este comprobante fue creado automáticamente al confirmar la factura de compra.</p>
-                         <p>Puede procesar su retención haciendo clic en el botón "Procesar Retención".</p>
+                         <p>Este comprobante fue creado automáticamente al confirmar la factura.</p>
+                         <p>Puede editar su retención haciendo clic en el botón "Editar Retención".</p>
                     </div>
                     <!-- Estado de Correo -->
                     <group string="Estado de Correo Electrónico" invisible="state == 'draft'">
@@ -144,7 +180,7 @@
                 <field name="date" string="Fecha"/>
                 <field name="name" string="Número"/>
                 <field name="invoice_number" string="Nro. Documento"/>
-                <field name="partner_id" string="Proveedor"/>
+                <field name="partner_id" string="Contacto"/>
                 <field name="partner_vat"/>
                 <field name="amount_total_invoice" string="Total Factura" sum="Total Bruto" optional="show"/>
                 <field name="amount_total_ret" string="Monto Retenido" sum="Total Retenido"/>
@@ -170,7 +206,7 @@
         <field name="arch" type="xml">
             <search string="Buscar Comprobantes ISLR">
                 <field name="name" string="Número"/>
-                <field name="partner_id" string="Proveedor"/>
+                <field name="partner_id" string="Contacto"/>
                 <field name="move_id" string="Factura"/>
                 <filter name="state_draft" string="Borrador" domain="[('state', '=', 'draft')]"/>
                 <filter name="state_posted" string="Publicado" domain="[('state', '=', 'posted')]"/>
@@ -187,7 +223,7 @@
                         domain="[('email_state', '=', 'failed')]"/>
                 <separator/>
                 <group expand="0" string="Agrupar Por">
-                    <filter name="group_partner" string="Proveedor" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_partner" string="Contacto" context="{'group_by': 'partner_id'}"/>
                     <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
                 </group>
             </search>
@@ -203,7 +239,7 @@
             <list string="Comprobantes de Retención ISLR" create="false" edit="false" delete="false">
                 <field name="name" string="Comprobante"/>
                 <field name="date" string="Fecha"/>
-                <field name="partner_id" string="Proveedor"/>
+                <field name="partner_id" string="Contacto"/>
                 <field name="amount_total_invoice" string="Monto Documento" sum="Total Bruto"/>
                 <field name="amount_total_ret" string="Monto Retenido" sum="Total Retenido"/>
                 <field name="amount_to_pay" string="Total a Pagar" sum="Total Neto"/>
@@ -289,9 +325,9 @@
         <field name="arch" type="xml">
             <search string="Buscar Comprobantes ISLR">
                 <field name="name" string="Número"/>
-                <field name="partner_id" string="Proveedor"/>
+                <field name="partner_id" string="Contacto"/>
                 <group expand="0" string="Agrupar Por">
-                    <filter name="group_partner" string="Proveedor" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_partner" string="Contacto" context="{'group_by': 'partner_id'}"/>
                     <filter name="group_date" string="Fecha" context="{'group_by': 'date'}"/>
                 </group>
             </search>

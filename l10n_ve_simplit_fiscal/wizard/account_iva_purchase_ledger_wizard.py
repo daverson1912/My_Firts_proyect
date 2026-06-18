@@ -41,6 +41,21 @@ class AccountIvaPurchaseLedgerWizard(models.TransientModel):
         ('done', 'Generado')
     ], string='Estado', default='draft')
 
+    date_print = fields.Date(
+        string='Fecha de Impresión',
+        default=fields.Date.context_today,
+        readonly=True,
+    )
+
+    def _get_ves_currency(self):
+        for code in ('VED', 'VEF'):
+            currency = self.env['res.currency'].search(
+                [('name', '=', code), ('active', '=', True)], limit=1
+            )
+            if currency:
+                return currency
+        return self.env.company.currency_id
+
     def _get_ledger_data(self):
         """
         Obtiene y procesa los datos necesarios para el libro de compras.
@@ -54,6 +69,7 @@ class AccountIvaPurchaseLedgerWizard(models.TransientModel):
             ('invoice_date', '>=', self.date_from),
             ('invoice_date', '<=', self.date_to),
             ('company_id', '=', self.company_id.id),
+            ('journal_id.l10n_ve_affects_purchase_ledger', '=', True),
         ]
         
         moves = Move.search(domain, order='invoice_date asc, name asc')
@@ -77,7 +93,7 @@ class AccountIvaPurchaseLedgerWizard(models.TransientModel):
             # Obtener todas las retenciones IVA del documento (puede haber una por alícuota)
             wh_iva_all = self.env['account.wh.iva'].search([
                 ('move_id', '=', move.id),
-                ('state', '!=', 'cancel')
+                ('state', 'in', ['posted', 'declared']),
             ])
             wh_iva = wh_iva_all[0] if wh_iva_all else False
 
@@ -121,8 +137,23 @@ class AccountIvaPurchaseLedgerWizard(models.TransientModel):
                 iva_amount = iva_16 + iva_8
 
             else:
-                # Fallback: factura sin retención — montos en Bolívares (VES)
-                mc_installed = 'l10n_ve_ta_multicurrency_total_amount' in move._fields
+                # Fallback: factura sin retención — convertir a Bolívares según tipo de cambio
+                bs_currency = self._get_ves_currency()
+                inv_currency = move.currency_id
+                ref_date = move.invoice_date or fields.Date.context_today(self)
+
+                def to_bs(amount):
+                    if not bs_currency or inv_currency == bs_currency:
+                        return amount
+                    return inv_currency._convert(amount, bs_currency, move.company_id, ref_date)
+
+                if inv_currency != bs_currency:
+                    rate_used = inv_currency._convert(1.0, bs_currency, move.company_id, ref_date)
+                    _logger.info(
+                        "[PURCHASE LEDGER] %s | %s → %s | Tasa: 1 %s = %.6f %s | Fecha tasa: %s",
+                        move.name, inv_currency.name, bs_currency.name,
+                        inv_currency.name, rate_used, bs_currency.name, ref_date,
+                    )
 
                 base_16 = 0.0
                 iva_16 = 0.0
@@ -131,50 +162,27 @@ class AccountIvaPurchaseLedgerWizard(models.TransientModel):
                 exempt_amount = 0.0
                 wh_amount = 0.0
 
-                if mc_installed:
-                    # Con multicurrency: usar campos VES explícitos del módulo TA
-                    total_with_iva = (move.l10n_ve_ta_multicurrency_total_amount or 0.0) * sign
-                    for line in move.invoice_line_ids:
-                        taxes = get_line_taxes(line.tax_ids)
-                        vat_tax = next((t for t in taxes if t.amount > 0 and 'igtf' not in t.name.lower()), None)
-                        taxable = getattr(line, 'l10n_ve_ta_multicurrency_taxable_amount', 0.0) or 0.0
-                        exempt_amt = getattr(line, 'l10n_ve_ta_multicurrency_exempt_amount', 0.0) or 0.0
-                        tax_amt = getattr(line, 'l10n_ve_ta_multicurrency_tax_amount', 0.0) or 0.0
-                        if vat_tax:
-                            rate = int(round(vat_tax.amount))
-                            if rate == 16:
-                                base_16 += taxable
-                                iva_16 += tax_amt
-                            elif rate == 8:
-                                base_8 += taxable
-                                iva_8 += tax_amt
-                        else:
-                            exempt_amount += exempt_amt or taxable
-                else:
-                    # Sin multicurrency: price_subtotal y amount_currency están en la
-                    # moneda de la factura (VES cuando la factura se emitió en VES)
-                    total_with_iva = move.amount_total * sign
-                    for line in move.invoice_line_ids:
-                        taxes = get_line_taxes(line.tax_ids)
-                        vat_tax = next((t for t in taxes if t.amount > 0 and 'igtf' not in t.name.lower()), None)
-                        if vat_tax:
-                            rate = int(round(vat_tax.amount))
-                            if rate == 16:
-                                base_16 += line.price_subtotal
-                            elif rate == 8:
-                                base_8 += line.price_subtotal
-                        else:
-                            exempt_amount += line.price_subtotal
-                    # IVA desde líneas del asiento en moneda de la factura
-                    for line in move.line_ids.filtered(lambda l: l.tax_line_id):
-                        tax = line.tax_line_id
-                        if 'igtf' in tax.name.lower():
-                            continue
-                        rate = int(round(tax.amount))
+                for line in move.invoice_line_ids:
+                    taxes = get_line_taxes(line.tax_ids)
+                    vat_tax = next((t for t in taxes if t.amount > 0 and 'igtf' not in t.name.lower()), None)
+                    if vat_tax:
+                        rate = int(round(vat_tax.amount))
                         if rate == 16:
-                            iva_16 += abs(line.amount_currency)
+                            base_16 += to_bs(line.price_subtotal)
                         elif rate == 8:
-                            iva_8 += abs(line.amount_currency)
+                            base_8 += to_bs(line.price_subtotal)
+                    else:
+                        exempt_amount += to_bs(line.price_subtotal)
+                # IVA desde líneas del asiento, convertido a Bs.
+                for line in move.line_ids.filtered(lambda l: l.tax_line_id):
+                    tax = line.tax_line_id
+                    if 'igtf' in tax.name.lower():
+                        continue
+                    rate = int(round(tax.amount))
+                    if rate == 16:
+                        iva_16 += to_bs(abs(line.amount_currency))
+                    elif rate == 8:
+                        iva_8 += to_bs(abs(line.amount_currency))
 
                 base_16 *= sign
                 iva_16 *= sign
@@ -183,6 +191,8 @@ class AccountIvaPurchaseLedgerWizard(models.TransientModel):
                 exempt_amount *= sign
                 taxable_base = base_16 + base_8
                 iva_amount = iva_16 + iva_8
+                # Total bruto c/IVA = base + exento + IVA positivo (sin descontar retenciones)
+                total_with_iva = taxable_base + exempt_amount + iva_amount
 
             main_number = move.l10n_ve_supplier_invoice_number or move.name
             line_data = {

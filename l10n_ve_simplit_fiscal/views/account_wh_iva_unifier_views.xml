@@ -35,7 +35,7 @@
                 
                 <!-- Agrupaciones -->
                 <group expand="0" string="Agrupar Por">
-                    <filter string="Proveedor" name="group_partner" 
+                    <filter string="Contacto" name="group_partner" 
                             context="{'group_by': 'partner_id'}"/>
                     <filter string="Estado" name="group_state" 
                             context="{'group_by': 'state'}"/>
@@ -66,7 +66,7 @@
                 <field name="name" string="Retención" width="120px"/>
                 <field name="date" string="Fecha" width="100px"/>
                 <field name="partner_vat" string="Código" width="120px"/>
-                <field name="partner_id" string="Proveedor" width="200px"/>
+                <field name="partner_id" string="Contacto" width="200px"/>
                 <field name="invoice_number" string="Documento" width="150px"/>
                 <field name="amount_total_invoice" string="Monto Documento" width="120px" sum="Total Documentos"/>
                 <field name="amount_taxable_base" string="Base Imponible" width="120px" sum="Total Base Imponible"/>
@@ -98,7 +98,6 @@
         <field name="context">{
             'search_default_draft': 1,
             'search_default_filter_date': 1,
-            'group_by': 'partner_id',
             'default_type': 'purchase',
         }</field>
         <field name="help" type="html">

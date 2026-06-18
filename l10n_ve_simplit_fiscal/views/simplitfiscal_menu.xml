@@ -85,5 +85,16 @@
                   action="action_account_iva_sales_ledger_detailed_wizard"
                   sequence="30"/>
         
+        <!-- ========== SECCIÓN DE RESUMEN EN INFORMES ========== -->
+        <menuitem id="menu_account_resumen_root"
+                  name="Resumen"
+                  parent="account.menu_finance_reports"
+                  sequence="50"/>
+
+        <menuitem id="menu_resumen_iva_report"
+                  name="Resumen de IVA"
+                  parent="menu_account_resumen_root"
+                  action="action_account_iva_resumen_wizard"
+                  sequence="10"/>
     </data>
 </odoo>

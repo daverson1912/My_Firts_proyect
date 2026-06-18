@@ -11,3 +11,4 @@ from . import account_igtf_report_wizard
 from . import account_iva_sales_ledger_wizard
 from . import account_wh_iva_customer_unifier
 from . import account_wh_islr_customer_unifier
+from . import account_iva_resumen_wizard

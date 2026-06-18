@@ -156,147 +156,282 @@
                 </div>
             </t>
         </t>
-    </template>
-    <template id="report_sales_ledger_detailed">
+    </template>    <template id="report_sales_ledger_detailed">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
-                <div class="article" style="font-family: Arial, sans-serif; font-size: 6px; color: #000; width: 100%;">
-                    
-                    <style>
-                        table, tr, td, th, tbody, thead {
-                            border: 0 !important;
-                            border-style: none !important;
-                            border-width: 0 !important;
-                            border-collapse: collapse !important;
-                            border-spacing: 0 !important;
-                            outline: none !important;
-                        }
-                        * {
-                            border: 0 !important;
-                            border-style: none !important;
-                        }
-                    </style>
+                <div class="article" style="font-family: Arial, sans-serif; font-size: 5.5px; color: #000; width: 100%;">
 
                     <div style="width: 100%; margin-bottom: 8px;">
-                        <div style="font-weight: bold;">CONTRIBUYENTE: <t t-esc="o.company_id.name"/></div>
-                        <div style="font-weight: bold;">R.I.F. No.: <t t-esc="o.company_id.vat"/></div>
-                        <div style="font-weight: bold;">DIRECCIÓN FISCAL: <t t-esc="o.company_id.street"/> <t t-esc="o.company_id.city"/></div>
+                        <div style="font-weight: bold; font-size: 9px;"><t t-esc="o.company_id.name"/></div>
+                        <div style="font-weight: bold;"><t t-esc="o.company_id.street"/> <t t-esc="o.company_id.city"/></div>
+                        <div style="font-weight: bold;"><t t-esc="o.company_id.vat"/></div>
                         <br/>
-                     <div style="font-weight: bold; font-size: 10px; text-align: center;">
-                                LIBRO DE VENTAS CORRESPONDIENTE AL PERIODO <t t-esc="o.date_from.strftime('%m')"/> Año: <t t-esc="o.date_from.strftime('%Y')"/>
-                          </div>
+                        <div style="font-weight: bold; font-size: 10px; text-align: center;">
+                            LIBRO DE VENTAS I.V.A.
+                        </div>
+                        <div style="font-size: 9px; text-align: center;">
+                            Desde: <t t-esc="o.date_from.strftime('%d/%m/%Y')"/> &#160;&#160; Hasta: <t t-esc="o.date_to.strftime('%d/%m/%Y')"/>
+                        </div>
                     </div>
+                    <div style="clear: both;"/>
 
-                    <table frame="void" rules="none" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; border: 0; margin: 0; padding: 0;">
+                    <!-- Tabla principal: 24 columnas -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 5px;" cellpadding="0" cellspacing="0">
                         <colgroup>
-                            <col style="width: 1.5%;"/> <col style="width: 3.5%;"/> <col style="width: 6%;"/> <col style="width: 14%;"/>
-                            <col style="width: 2.5%;"/> <col style="width: 2.5%;"/> <col style="width: 2.0%;"/> <col style="width: 2.0%;"/>
-                            <col style="width: 2.5%;"/> <col style="width: 2.5%;"/> <col style="width: 4.5%;"/> <col style="width: 3.5%;"/>
-                            <col style="width: 4.5%;"/> <col style="width: 1%;"/> <col style="width: 4.5%;"/>
-                            <col style="width: 4.5%;"/> <col style="width: 1%;"/> <col style="width: 4.5%;"/>
-                            <col style="width: 4.5%;"/> <col style="width: 1%;"/> <col style="width: 4.5%;"/>
-                            <col style="width: 4.5%;"/> <col style="width: 1%;"/> <col style="width: 4.5%;"/>
-                            <col style="width: 3%;"/> <col style="width: 3%;"/> <col style="width: 3.5%;"/>
+                            <!-- DATOS (11 cols) -->
+                            <col style="width: 1.5%;"/>  <!-- Ope -->
+                            <col style="width: 3.5%;"/>  <!-- Fecha -->
+                            <col style="width: 6%;"/>    <!-- RIF -->
+                            <col style="width: 13%;"/>   <!-- Nombre -->
+                            <col style="width: 2%;"/>    <!-- Tipo Doc -->
+                            <col style="width: 4%;"/>    <!-- Numero -->
+                            <col style="width: 5%;"/>    <!-- Control -->
+                            <col style="width: 2%;"/>    <!-- Tipo Tran -->
+                            <col style="width: 4%;"/>    <!-- Fac Afectada -->
+                            <col style="width: 5%;"/>    <!-- Total c/IVA -->
+                            <col style="width: 3.5%;"/>  <!-- Exentas -->
+                            <!-- Contribuyentes (3 cols) -->
+                            <col style="width: 5%;"/>    <!-- Base -->
+                            <col style="width: 2%;"/>    <!-- % -->
+                            <col style="width: 4%;"/>    <!-- IVA -->
+                            <!-- No Contribuyentes (3 cols) -->
+                            <col style="width: 5%;"/>    <!-- Base -->
+                            <col style="width: 2%;"/>    <!-- % -->
+                            <col style="width: 4%;"/>    <!-- IVA -->
+                            <!-- Retenciones (7 cols) -->
+                            <col style="width: 5%;"/>    <!-- Base Ret -->
+                            <col style="width: 4%;"/>    <!-- IVA -->
+                            <col style="width: 4%;"/>    <!-- Retenido -->
+                            <col style="width: 2%;"/>    <!-- % -->
+                            <col style="width: 4%;"/>    <!-- Percibido -->
+                            <col style="width: 5%;"/>    <!-- Nro Comp -->
+                            <col style="width: 3.5%;"/>  <!-- Fecha Comp -->
                         </colgroup>
-                        
                         <thead>
-                            <tr style="text-align: center; font-weight: bold; background-color: #f2f2f2; border-top: 0.5px solid #000 !important; border-bottom: 0.5px solid #000 !important;">
-                                <th colspan="12" style="padding: 2px;">DATOS DE LA OPERACIÓN</th>
-                                <th colspan="6" style="padding: 2px;">VENTAS A CONTRIBUYENTES</th>
-                                <th colspan="6" style="padding: 2px;">VENTAS A NO CONTRIBUYENTES</th>
-                                <th colspan="3" style="padding: 2px;">RETENCIÓN</th>
+                            <!-- Fila 1: grupos principales -->
+                            <tr style="text-align: center; font-weight: bold; background-color: #f2f2f2; border-top: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                                <th colspan="11" style="padding: 2px;"></th>
+                                <th colspan="3" style="padding: 2px; border-left: 0.5px solid #000;">Ventas Internas a Contribuyentes</th>
+                                <th colspan="3" style="padding: 2px; border-left: 0.5px solid #000;">Ventas Internas a No Contribuyentes</th>
+                                <th colspan="7" style="padding: 2px; border-left: 0.5px solid #000;">RETENCIONES</th>
                             </tr>
-                            <tr style="text-align: center; font-weight: bold; background-color: #f2f2f2;">
-                                <th colspan="12" style="padding: 1px;"/>
-                                <th colspan="3" style="padding: 1px;">Alícuota General</th>
-                                <th colspan="3" style="padding: 1px;">Alícuota Reducida</th>
-                                <th colspan="3" style="padding: 1px;">Alícuota General</th>
-                                <th colspan="3" style="padding: 1px;">Alícuota Reducida</th>
-                                <th colspan="3" style="padding: 1px;"/>
+                            <!-- Fila 2: sub-grupos -->
+                            <tr style="text-align: center; font-weight: bold; background-color: #f2f2f2; border-bottom: 0.5px solid #000;">
+                                <th colspan="11" style="padding: 1px;"></th>
+                                <th colspan="3" style="padding: 1px; border-left: 0.5px solid #000; font-size: 5px;">Ventas por alic. general (16%)</th>
+                                <th colspan="3" style="padding: 1px; border-left: 0.5px solid #000; font-size: 5px;">Ventas por alic. general (16%)</th>
+                                <th colspan="8" style="padding: 1px; border-left: 0.5px solid #000;"></th>
                             </tr>
-                            <tr style="text-align: center; font-weight: bold; background-color: #e6e6e6; font-size: 5px; border-top: 0.5px solid #000 !important; border-bottom: 0.5px solid #000 !important;">
-                                <th style="padding: 2px;">Oper Nro</th>
-                                <th style="padding: 2px;">Fecha Factura</th>
-                                <th style="padding: 2px;">RIF</th>
-                                <th style="padding: 2px;">Nombre Cliente o Razón Social</th>
-                                <th style="padding: 2px;">Nro Factura</th>
-                                <th style="padding: 2px;">Nro Control</th>
-                                <th style="padding: 2px;">Nro Nota Débito</th>
-                                <th style="padding: 2px;">Nro Nota Crédito</th>
-                                <th style="padding: 2px;">Tipo Tran</th>
-                                <th style="padding: 2px;">Fact. Afectada</th>
-                                <th style="padding: 2px;">Total con IVA</th>
-                                <th style="padding: 2px;">Ventas Exentas</th>
-                                <th style="padding: 2px;">Base</th> <th style="padding: 2px;">%</th> <th style="padding: 2px;">IVA</th>
-                                <th style="padding: 2px;">Base</th> <th style="padding: 2px;">%</th> <th style="padding: 2px;">IVA</th>
-                                <th style="padding: 2px;">Base</th> <th style="padding: 2px;">%</th> <th style="padding: 2px;">IVA</th>
-                                <th style="padding: 2px;">Base</th> <th style="padding: 2px;">%</th> <th style="padding: 2px;">IVA</th>
-                                <th style="padding: 2px;">IVA Retenido</th>
-                                <th style="padding: 2px;">Nro Comp.</th>
-                                <th style="padding: 2px;">Fecha Comp.</th>
+                            <!-- Fila 3: nombres de columna -->
+                            <tr style="text-align: center; font-weight: bold; background-color: #e6e6e6; border-top: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                                <th style="padding: 1px;">Nro Ope</th>
+                                <th style="padding: 1px;">Fecha</th>
+                                <th style="padding: 1px;">R.I.F.</th>
+                                <th style="padding: 1px; text-align: left;">Nombre o razón social</th>
+                                <th style="padding: 1px;">Tipo Doc</th>
+                                <th style="padding: 1px;">Numero</th>
+                                <th style="padding: 1px;">Nro Control</th>
+                                <th style="padding: 1px;">Tipo Tran.</th>
+                                <th style="padding: 1px;">Nro. Fac Afectada</th>
+                                <th style="padding: 1px; text-align: right;">Total Ventas Doc incluyendo impuesto</th>
+                                <th style="padding: 1px; text-align: right;">Exentas</th>
+                                <!-- Contribuyentes -->
+                                <th style="padding: 1px; text-align: right; border-left: 0.5px solid #000;">Base Imponible</th>
+                                <th style="padding: 1px;">% Alic</th>
+                                <th style="padding: 1px; text-align: right;">Monto Alic.Gral.</th>
+                                <!-- No Contribuyentes -->
+                                <th style="padding: 1px; text-align: right; border-left: 0.5px solid #000;">Base Imponible</th>
+                                <th style="padding: 1px;">% Alic</th>
+                                <th style="padding: 1px; text-align: right;">Monto Alic.Gral.</th>
+                                <!-- Retenciones -->
+                                <th style="padding: 1px; text-align: right; border-left: 0.5px solid #000;">Base Retención I.V.A.</th>
+                                <th style="padding: 1px; text-align: right;">I.V.A.</th>
+                                <th style="padding: 1px; text-align: right;">I.V.A. Retenido</th>
+                                <th style="padding: 1px;">% Alic</th>
+                                <th style="padding: 1px; text-align: right;">Percibido</th>
+                                <th style="padding: 1px;">Nro. de Comp. de Retención</th>
+                                <th style="padding: 1px;">Fecha de Comp. de Retención</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-set="t_total_iva" t-value="0.0"/><t t-set="t_exento" t-value="0.0"/>
-                            <t t-set="t_base_g" t-value="0.0"/><t t-set="t_iva_g" t-value="0.0"/>
-                            <t t-set="t_base_r" t-value="0.0"/><t t-set="t_iva_r" t-value="0.0"/>
+                            <t t-set="t_total"    t-value="0.0"/>
+                            <t t-set="t_exento"   t-value="0.0"/>
+                            <t t-set="t_base_cnt" t-value="0.0"/>
+                            <t t-set="t_iva_cnt"  t-value="0.0"/>
+                            <t t-set="t_base_ncnt" t-value="0.0"/>
+                            <t t-set="t_iva_ncnt"  t-value="0.0"/>
                             <t t-set="t_retenido" t-value="0.0"/>
+
                             <t t-foreach="o._get_ledger_data()" t-as="l">
-                                 <tr style="text-align: center;">
+                                <tr style="text-align: center; border-bottom: 0.3px solid #ddd;">
                                     <td style="padding: 1px;"><t t-esc="l['ope']"/></td>
-                                    <td style="padding: 1px;"><t t-esc="l['date'].strftime('%d/%m/%Y')"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['date'].strftime('%d/%m/%y')"/></td>
                                     <td style="padding: 1px;"><t t-esc="l['rif']"/></td>
                                     <td style="padding: 1px; text-align: left;"><t t-esc="l['name']"/></td>
-                                    <td style="padding: 1px;"><t t-if="l['tipo_tran'] and l['tipo_tran'].startswith('01')" t-esc="l['doc_num']"/></td>
-                                    <td style="padding: 1px;"><t t-esc="l['serial']"/></td>
-                                    <td style="padding: 1px;"><t t-if="l['tipo_tran'] and l['tipo_tran'].startswith('02')" t-esc="l['doc_num']"/></td>
-                                    <td style="padding: 1px;"><t t-if="l['tipo_tran'] and l['tipo_tran'].startswith('03')" t-esc="l['doc_num']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['doc_type']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['doc_num']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['control_number']"/></td>
                                     <td style="padding: 1px;"><t t-esc="l['tipo_tran']"/></td>
                                     <td style="padding: 1px;"><t t-esc="l['fac_afectada']"/></td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['total_c_iva']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['exempt']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('base_g_cnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px;">16</td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('iva_g_cnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('base_r_cnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px;">8</td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('iva_r_cnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('base_g_ncnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px;">16</td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('iva_g_ncnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('base_r_ncnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px;">8</td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l.get('iva_r_ncnt', 0.0)).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
-                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['iva_retenido']).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['total_c_iva']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['exempt']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <!-- Contribuyentes -->
+                                    <td style="padding: 1px; text-align: right; border-left: 0.5px solid #ccc;"><t t-esc="'{:,.2f}'.format(l['base_cnt']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <td style="padding: 1px;"><t t-esc="'{:.2f}'.format(l['aliq_cnt']).replace('.',',')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['iva_cnt']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <!-- No Contribuyentes -->
+                                    <td style="padding: 1px; text-align: right; border-left: 0.5px solid #ccc;"><t t-esc="'{:,.2f}'.format(l['base_ncnt']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <td style="padding: 1px;"><t t-esc="'{:.2f}'.format(l['aliq_ncnt']).replace('.',',')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['iva_ncnt']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <!-- Retenciones -->
+                                    <td style="padding: 1px; text-align: right; border-left: 0.5px solid #ccc;"><t t-esc="'{:,.2f}'.format(l['ret_base']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['ret_iva']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['ret_retenido']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                    <td style="padding: 1px;"><t t-esc="'{:.0f}'.format(l['ret_pct'])"/></td>
+                                    <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(l['percibido']).replace(',','X').replace('.',',').replace('X','.')"/></td>
                                     <td style="padding: 1px;"><t t-esc="l['nro_ret']"/></td>
-                                    <td style="padding: 1px;"><t t-esc="l['fecha_ret']"/></td>
+                                    <td style="padding: 1px;"><t t-esc="l['retention_registration_date'].strftime('%d/%m/%y') if l['retention_registration_date'] else ''"/></td>
                                 </tr>
-                                <t t-set="t_total_iva" t-value="t_total_iva + l['total_c_iva']"/>
-                                <t t-set="t_exento" t-value="t_exento + l['exempt']"/>
-                                <t t-set="t_base_g" t-value="t_base_g + l.get('base_g_cnt', 0.0) + l.get('base_g_ncnt', 0.0)"/>
-                                <t t-set="t_iva_g" t-value="t_iva_g + l.get('iva_g_cnt', 0.0) + l.get('iva_g_ncnt', 0.0)"/>
-                                <t t-set="t_retenido" t-value="t_retenido + l['iva_retenido']"/>
+                                <t t-set="t_total"     t-value="t_total    + l['total_c_iva']"/>
+                                <t t-set="t_exento"    t-value="t_exento   + l['exempt']"/>
+                                <t t-set="t_base_cnt"  t-value="t_base_cnt + l['base_cnt']"/>
+                                <t t-set="t_iva_cnt"   t-value="t_iva_cnt  + l['iva_cnt']"/>
+                                <t t-set="t_base_ncnt" t-value="t_base_ncnt + l['base_ncnt']"/>
+                                <t t-set="t_iva_ncnt"  t-value="t_iva_ncnt  + l['iva_ncnt']"/>
+                                <t t-set="t_retenido"  t-value="t_retenido + l['ret_retenido']"/>
                             </t>
+
+                            <!-- Fila de totales -->
+                            <tr style="font-weight: bold; border-top: 0.5px solid #000; background-color: #f2f2f2;">
+                                <td colspan="9" style="padding: 1px; text-align: right;">TOTALES</td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_total).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_exento).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_base_cnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td/>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_iva_cnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_base_ncnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td/>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_iva_ncnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td colspan="3" style="padding: 1px;"/>
+                                <td/>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_retenido).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td colspan="2"/>
+                            </tr>
                         </tbody>
                     </table>
 
-                    <div style="margin-top: 12px; width: 380px;">
-                        <table frame="void" rules="none" border="0" cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; border: 0;">
-                            <tr style="background-color: #e6e6e6; font-weight: bold; text-align: center; border-top: 0.5px solid #000 !important; border-bottom: 0.5px solid #000 !important;">
-                                <td colspan="3" style="padding: 3px;">RESUMEN DE DÉBITOS FISCALES</td>
+                    <!-- Sección: Retenciones Aplicadas a otros Periodos -->
+                    <t t-set="otros_lines" t-value="o._get_out_of_month_retentions()"/>
+                    <t t-if="otros_lines">
+                        <div style="margin-top: 14px; display: inline-block;">
+                            <div style="font-weight: bold; font-size: 7px; background-color: #e6e6e6; border-top: 0.5px solid #000; border-bottom: 0.5px solid #000; padding: 3px; text-align: center;">
+                                Retenciones Aplicadas a otros Periodos
+                            </div>
+                            <table style="width: auto; border-collapse: collapse; font-size: 5px;" cellpadding="0" cellspacing="0">
+                                <colgroup>
+                                    <col style="width: 20px;"/>   <!-- Nro -->
+                                    <col style="width: 45px;"/>   <!-- Fecha -->
+                                    <col style="width: 70px;"/>   <!-- RIF -->
+                                    <col style="width: 150px;"/>  <!-- Nombre -->
+                                    <col style="width: 90px;"/>   <!-- Nro Retención -->
+                                    <col style="width: 80px;"/>   <!-- Nro Fac Afectada -->
+                                    <col style="width: 45px;"/>   <!-- Fecha Fac Afectada -->
+                                    <col style="width: 40px;"/>   <!-- Tipo Tran -->
+                                    <col style="width: 65px;"/>   <!-- Base Ret IVA -->
+                                    <col style="width: 55px;"/>   <!-- IVA -->
+                                    <col style="width: 55px;"/>   <!-- IVA Retenido -->
+                                    <col style="width: 30px;"/>   <!-- % Alic -->
+                                    <col style="width: 55px;"/>   <!-- Percibido -->
+                                </colgroup>
+                                <thead>
+                                    <tr style="text-align: center; font-weight: bold; background-color: #f2f2f2; border-top: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                                        <th style="padding: 1px;">Nro</th>
+                                        <th style="padding: 1px;">Fecha</th>
+                                        <th style="padding: 1px;">ID Fiscal</th>
+                                        <th style="padding: 1px; text-align: left;">Nombre o razón social</th>
+                                        <th style="padding: 1px;">Nro. de Retención</th>
+                                        <th style="padding: 1px;">Nro. Fac Afectada</th>
+                                        <th style="padding: 1px;">Fecha Fac. Afectada</th>
+                                        <th style="padding: 1px;">Tipo Tran.</th>
+                                        <th style="padding: 1px; text-align: right;">Base Ret. I.V.A.</th>
+                                        <th style="padding: 1px; text-align: right;">I.V.A.</th>
+                                        <th style="padding: 1px; text-align: right;">I.V.A. Retenido</th>
+                                        <th style="padding: 1px;">% Alic</th>
+                                        <th style="padding: 1px; text-align: right;">Percibido</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-set="t_otros_retenido" t-value="0.0"/>
+                                    <t t-set="t_otros_iva" t-value="0.0"/>
+                                    <t t-foreach="otros_lines" t-as="ol">
+                                        <tr style="text-align: center; border-bottom: 0.3px solid #ddd;">
+                                            <td style="padding: 1px;"><t t-esc="ol['ope']"/></td>
+                                            <td style="padding: 1px;"><t t-esc="ol['date'].strftime('%d/%m/%y') if ol['date'] else ''"/></td>
+                                            <td style="padding: 1px;"><t t-esc="ol['rif']"/></td>
+                                            <td style="padding: 1px; text-align: left;"><t t-esc="ol['name']"/></td>
+                                            <td style="padding: 1px;"><t t-esc="ol['ret_number']"/></td>
+                                            <td style="padding: 1px;"><t t-esc="ol['affected_doc']"/></td>
+                                            <td style="padding: 1px;"><t t-esc="ol['affected_date'].strftime('%d/%m/%y') if ol['affected_date'] else ''"/></td>
+                                            <td style="padding: 1px;"><t t-esc="ol['tran_type']"/></td>
+                                            <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(ol['ret_base']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                            <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(ol['ret_iva']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                            <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(ol['ret_retenido']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                            <td style="padding: 1px;"><t t-esc="'{:.0f}'.format(ol['ret_pct'])"/></td>
+                                            <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(ol['percibido']).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                        </tr>
+                                        <t t-set="t_otros_retenido" t-value="t_otros_retenido + ol['ret_retenido']"/>
+                                        <t t-set="t_otros_iva" t-value="t_otros_iva + ol['ret_iva']"/>
+                                    </t>
+                                    <tr style="font-weight: bold; border-top: 0.5px solid #000; background-color: #f2f2f2;">
+                                        <td colspan="8" style="padding: 1px; text-align: right;">TOTALES</td>
+                                        <td colspan="2" style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_otros_iva).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                        <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_otros_retenido).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                        <td colspan="2"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <t t-set="t_otros_retenido" t-value="0.0"/>
+                    </t>
+
+                    <!-- Resumen de débitos fiscales -->
+                    <div style="margin-top: 10px; width: 420px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 6px;" cellpadding="0" cellspacing="0">
+                            <tr style="font-weight: bold; background-color: #e6e6e6; border-top: 0.5px solid #000; border-bottom: 0.5px solid #000;">
+                                <td colspan="3" style="padding: 3px;">Resumen de Debitos Fiscales</td>
                             </tr>
-                            <tr style="background-color: #f2f2f2; font-weight: bold; text-align: center; border-bottom: 0.5px solid #000 !important;">
-                                <td style="width: 50%; padding: 2px;">Descripción</td>
-                                <td style="width: 25%; padding: 2px;">Base Imponible</td>
-                                <td style="width: 25%; padding: 2px;">Débito Fiscal</td>
+                            <tr style="font-weight: bold; background-color: #f2f2f2; border-bottom: 0.5px solid #000;">
+                                <td style="width: 55%; padding: 2px;"></td>
+                                <td style="width: 22%; padding: 2px; text-align: center;">Base Imponible</td>
+                                <td style="width: 23%; padding: 2px; text-align: center;">Debito Fiscal</td>
                             </tr>
-                            <tr><td style="padding-left: 5px;">Ventas Internas No Gravadas</td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_exento).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td><td style="text-align: right; padding-right: 5px;">0,00</td></tr>
-                            <tr><td style="padding-left: 5px;">Ventas de Exportación</td><td style="text-align: right; padding-right: 5px;">0,00</td><td style="text-align: right; padding-right: 5px;">0,00</td></tr>
-                            <tr><td style="padding-left: 5px;">Ventas Internas Gravadas por Alícuota General (16%)</td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_base_g).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_iva_g).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td></tr>
-                            <tr><td style="padding-left: 5px;">Ventas Internas Gravadas por Alícuota General + Adicional</td><td style="text-align: right; padding-right: 5px;">0,00</td><td style="text-align: right; padding-right: 5px;">0,00</td></tr>
-                            <tr><td style="padding-left: 5px;">Ventas Internas Gravadas por Alícuota Reducida (8%)</td><td style="text-align: right; padding-right: 5px;">0,00</td><td style="text-align: right; padding-right: 5px;">0,00</td></tr>
-                            <tr style="font-weight: bold; background-color: #f2f2f2; border-top: 0.5px solid #000 !important;"><td style="padding-left: 5px;">TOTAL VENTAS Y DÉBITOS FISCALES</td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_base_g + t_exento).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td><td style="text-align: right; padding-right: 5px;"><t t-esc="'{:,.2f}'.format(t_iva_g).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td></tr>
-                            <tr><td style="padding-left: 5px; font-weight: bold;">I.V.A. RETENIDO POR EL COMPRADOR</td><td style="background-color: #eee;"/><td style="text-align: right; padding-right: 5px; font-weight: bold;"><t t-esc="'{:,.2f}'.format(t_retenido).replace(',', 'X').replace('.', ',').replace('X', '.')"/></td></tr>
+                            <tr>
+                                <td style="padding: 1px 5px; font-weight: bold;">Retenciones Aplicadas</td>
+                                <td/>
+                                <td style="padding: 1px; text-align: right; font-weight: bold;"><t t-esc="'{:,.2f}'.format(t_retenido + t_otros_retenido).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1px 5px;">Ventas Internas gravadas por alicuota general (Contribuyentes) (16%)</td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_base_cnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_iva_cnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1px 5px;">Ventas Internas gravadas por alicuota general (no Contribuyentes) (16%)</td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_base_ncnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_iva_ncnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                            </tr>
+                            <tr style="font-weight: bold; border-top: 0.5px solid #000;">
+                                <td style="padding: 1px 5px;">Total ventas y débitos fiscales del período</td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_base_cnt + t_base_ncnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_iva_cnt + t_iva_ncnt).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 1px 5px;">Ventas internas no gravadas</td>
+                                <td style="padding: 1px; text-align: right;"><t t-esc="'{:,.2f}'.format(t_exento).replace(',','X').replace('.',',').replace('X','.')"/></td>
+                                <td style="padding: 1px; text-align: right;">0,00</td>
+                            </tr>
                         </table>
                     </div>
 

@@ -139,6 +139,7 @@ class AccountMove(models.Model):
     l10n_ve_doc_total            = fields.Monetary(string='Total',         currency_field='currency_id', compute='_compute_l10n_ve_doc_amounts')
     l10n_ve_doc_ret_iva          = fields.Monetary(string='Ret. IVA',      currency_field='currency_id', compute='_compute_l10n_ve_doc_amounts')
     l10n_ve_doc_ret_islr         = fields.Monetary(string='Ret. ISLR',     currency_field='currency_id', compute='_compute_l10n_ve_doc_amounts')
+    l10n_ve_doc_igtf             = fields.Monetary(string='Impuesto IGTF', currency_field='currency_id', compute='_compute_l10n_ve_doc_amounts')
     l10n_ve_doc_amount_to_pay    = fields.Monetary(string='Monto a Pagar', currency_field='currency_id', compute='_compute_l10n_ve_doc_amounts')
 
     @api.depends('move_type')
@@ -168,6 +169,7 @@ class AccountMove(models.Model):
                 move.l10n_ve_doc_discount_amount = move.l10n_ve_doc_subtotal = 0.0
                 move.l10n_ve_doc_gross_iva = move.l10n_ve_doc_total = 0.0
                 move.l10n_ve_doc_ret_iva = move.l10n_ve_doc_ret_islr = 0.0
+                move.l10n_ve_doc_igtf = 0.0
                 move.l10n_ve_doc_amount_to_pay = 0.0
                 continue
 
@@ -184,6 +186,7 @@ class AccountMove(models.Model):
 
                 if line.tax_ids:
                     taxable += ps
+                    # IVA bruto: solo impuestos POSITIVOS (excluye retenciones negativas)
                     tax_res = line.tax_ids.compute_all(
                         line.price_unit, move.currency_id,
                         line.quantity, product=line.product_id,
@@ -198,8 +201,9 @@ class AccountMove(models.Model):
                     discount += max(nominal - ps, 0.0)
 
             total_fiscal = subtotal + gross_iva
-            ret_iva      = (net_total - subtotal) - gross_iva   # negativo
-            islr         = move.l10n_ve_islr_amount or 0.0
+            is_refund    = move.move_type in ('in_refund', 'out_refund')
+            ret_iva      = 0.0 if is_refund else (net_total - subtotal) - gross_iva
+            islr         = 0.0 if is_refund else (move.l10n_ve_islr_amount or 0.0)
             igtf         = move.l10n_ve_igtf_amount or 0.0
 
             move.l10n_ve_doc_taxable_amount  = taxable
@@ -210,6 +214,7 @@ class AccountMove(models.Model):
             move.l10n_ve_doc_total           = total_fiscal
             move.l10n_ve_doc_ret_iva         = ret_iva
             move.l10n_ve_doc_ret_islr        = -abs(islr) if islr else 0.0
+            move.l10n_ve_doc_igtf            = igtf
             move.l10n_ve_doc_amount_to_pay   = total_fiscal + ret_iva - abs(islr) - igtf
 
     # ========== CAMPOS PARA LIBRO DE VENTAS E IGTF ==========
@@ -246,16 +251,32 @@ class AccountMove(models.Model):
         string='Nro Factura Fiscal',
         copy=False,
     )
-    
+
     l10n_ve_fiscal_z_number = fields.Char(
         string='Nro de Reporte Z',
         copy=False,
     )
-    
+
     l10n_ve_fiscal_printer_serial = fields.Char(
         string='Serial Impresora Fiscal',
         copy=False,
     )
+
+    l10n_ve_fiscal_config_type = fields.Selection([
+        ('free_form', 'Forma Libre'),
+        ('fiscal_printer', 'Impresora Fiscal'),
+        ('digital_invoice', 'Facturación Digital'),
+    ], string='Tipo Config. Fiscal',
+       compute='_compute_l10n_ve_fiscal_config_type',
+    )
+
+    @api.depends('company_id')
+    def _compute_l10n_ve_fiscal_config_type(self):
+        for move in self:
+            config = self.env['simplitfiscal.config'].search([
+                ('company_id', '=', move.company_id.id)
+            ], limit=1)
+            move.l10n_ve_fiscal_config_type = config.l10n_ve_fiscal_config_type if config else 'free_form'
 
     l10n_ve_iva_retentions_summary_html = fields.Html(
         compute='_compute_l10n_ve_iva_retentions_summary',
@@ -913,7 +934,7 @@ class AccountMove(models.Model):
         if self.state == 'draft' and self.move_type in ('in_invoice', 'in_refund'):
             # Llamamos al mtodo que ya existe y que consulta al API
             if hasattr(self, 'action_calculate_islr_retention'):
-                self.action_calculate_islr_retention(raise_error=False)
+                self.action_calculate_islr_retention(raise_error=True)
 
     @api.depends('line_ids')
     def _compute_wh_islr_state(self):
@@ -1073,12 +1094,12 @@ class AccountMove(models.Model):
         Soporta flujos de Compras y Ventas (IVA/ISLR).
         """
         for move in self:
-            is_fiscal = move.move_type in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund')
+            is_fiscal = move.move_type in ('in_invoice', 'out_invoice')
             if is_fiscal:
                 _logger.warning(f"[FISCAL] Iniciando proceso fiscal pre-post para {move.name}")
                 # 1. Calcular ISLR vía API (Bloqueante si falla)
-                move.action_calculate_islr_retention(raise_error=False)
-                
+                move.action_calculate_islr_retention(raise_error=True)
+
                 # 2. Inyectar línea contable integrada (Compras y Ventas)
                 if move.l10n_ve_islr_amount > 0:
                     move._inject_islr_integrated_line()
@@ -1086,14 +1107,14 @@ class AccountMove(models.Model):
         # 3. Publicación estándar de Odoo
         res = super()._post(soft=soft)
 
-        # 4. Creación de registros informativos y comprobantes
+        # 4. Creación de registros informativos y comprobantes (solo facturas, no NC)
         for move in self:
-            if move.move_type in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund'):
+            if move.move_type in ('in_invoice', 'out_invoice'):
                 _logger.warning(f"[FISCAL] Generando comprobantes post-posteo para {move.name}")
-                
+
                 # Comprobante IVA
                 move._create_withholding_voucher()
-                
+
                 # Comprobante ISLR
                 if move.l10n_ve_islr_amount > 0:
                     move._create_islr_withholding()

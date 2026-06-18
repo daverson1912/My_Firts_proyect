@@ -25,7 +25,6 @@ class AccountWhIva(models.Model):
     
     name = fields.Char(
         string='Número de Comprobante',
-        readonly=True,
         copy=False,
         help='Número correlativo del comprobante. Se llena con la respuesta del API.',
     )
@@ -70,7 +69,6 @@ class AccountWhIva(models.Model):
     date = fields.Date(
         string='Fecha del Comprobante',
         required=True,
-        readonly=True,
         default=fields.Date.context_today,
         tracking=True,
         help='Fecha en que se procesa el comprobante de retención.',
@@ -304,14 +302,50 @@ class AccountWhIva(models.Model):
         store=True,
         readonly=True,
     )
-    
+
+    retention_registration_date = fields.Date(
+        string='Fecha de Registro',
+        tracking=True,
+        help='Fecha en que se recibió la retención. Se usa cuando el cliente la entrega fuera del mes en curso.',
+    )
+
+    is_out_of_month = fields.Boolean(
+        compute='_compute_is_out_of_month',
+        store=False,
+    )
+
+    @api.depends('date', 'retention_registration_date')
+    def _compute_is_out_of_month(self):
+        for rec in self:
+            if rec.retention_registration_date and rec.date:
+                rec.is_out_of_month = (
+                    rec.date.month != rec.retention_registration_date.month or
+                    rec.date.year != rec.retention_registration_date.year
+                )
+            else:
+                rec.is_out_of_month = False
+
     partner_vat = fields.Char(
         related='partner_id.vat',
         string='RIF del Proveedor',
         store=True,
         readonly=True,
     )
-    
+
+    next_correlative = fields.Char(
+        string='Próximo Correlativo',
+        compute='_compute_correlatives',
+        store=False,
+    )
+
+    @api.depends('company_id')
+    def _compute_correlatives(self):
+        for rec in self:
+            config = self.env['simplitfiscal.config'].search(
+                [('company_id', '=', rec.company_id.id)], limit=1
+            )
+            rec.next_correlative = config.withholding_sequence_display or ''
+
     # ========== MÉTODOS ==========
     
     @api.model
@@ -410,19 +444,70 @@ class AccountWhIva(models.Model):
     def action_reset_to_draft(self):
         """
         Vuelve el comprobante a estado borrador.
-        Útil para correcciones.
+        En compras valida que sea el último correlativo y hace rollback en el API.
         """
         self.ensure_one()
-        if self.state != 'posted': # Changed from 'done'
-            raise ValidationError(
-                _('Solo se pueden resetear comprobantes en estado Publicado.') # Changed from 'Procesado'
+        if self.type != 'purchase':
+            raise ValidationError(_('El reverso a borrador solo aplica a retenciones de compra.'))
+
+        if self.state != 'posted':
+            raise ValidationError(_('Solo se pueden resetear comprobantes en estado Publicado.'))
+
+        if self.name:
+            # Verificar que sea el último correlativo activo de la compañía
+            last = self.env['account.wh.iva'].search([
+                ('type', '=', 'purchase'),
+                ('company_id', '=', self.company_id.id),
+                ('name', '!=', False),
+                ('state', 'not in', ['cancel']),
+            ], order='name desc', limit=1)
+
+            if last and last.id != self.id:
+                raise ValidationError(_(
+                    'No puede reversar este comprobante porque la secuencia ya va '
+                    'por el Nro. %s. Debe reversar a partir de ese valor hasta llegar '
+                    'al que desea corregir y luego volver a procesar.'
+                ) % last.name)
+
+            # Rollback del correlativo en el API
+            config = self.env['simplitfiscal.config'].search(
+                [('company_id', '=', self.company_id.id)], limit=1
             )
-        
-        self.write({'state': 'draft'})
-        _logger.info(
-            f"[FISCAL] Comprobante reseteado a borrador: "
-            f"Número={self.name}, ID={self.id}"
-        )
+            if config and config.ta_api_key:
+                import requests
+                from .utils import get_api_url
+                api_host = get_api_url()
+                try:
+                    response = requests.patch(
+                        f"{api_host.rstrip('/')}/api/v1/licensing/correlative/rollback",
+                        headers={
+                            'X-API-Key': config.ta_api_key,
+                            'Content-Type': 'application/json',
+                        },
+                        json={'type': 'iva'},
+                        timeout=15,
+                    )
+                    res_data = response.json()
+                    if res_data.get('error') != 0:
+                        raise ValidationError(
+                            res_data.get('message', _('Error al comunicarse con el Servicio Fiscal.'))
+                        )
+                    current = (res_data.get('data') or {}).get('current')
+                    if current:
+                        config.withholding_sequence_display = current
+                    _logger.info(
+                        '[FISCAL-IVA] Rollback correlativo: %s → %s',
+                        self.name, current,
+                    )
+                except ValidationError:
+                    raise
+                except Exception as e:
+                    raise ValidationError(
+                        _('No se pudo conectar con el Servicio Fiscal: %s') % str(e)
+                    )
+
+        _logger.info('[FISCAL-IVA] Comprobante reseteado a borrador: Número=%s, ID=%s', self.name, self.id)
+        self.write({'state': 'draft', 'name': False})
         return True
 
     def action_mark_as_declared(self):
@@ -476,7 +561,7 @@ class AccountWhIva(models.Model):
         return result
     
     # ========== ACCIONES ==========
-    
+
     def action_unify(self):
         """
         Unifica múltiples registros de retención de IVA bajo un único número de 

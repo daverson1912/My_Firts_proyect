@@ -20,8 +20,8 @@ class AccountWhIslr(models.Model):
 
     name = fields.Char(
         string='Número de Comprobante',
-        readonly=True,
         copy=False,
+        tracking=True,
         help='Número correlativo del comprobante de ISLR.',
     )
 
@@ -63,7 +63,6 @@ class AccountWhIslr(models.Model):
     date = fields.Date(
         string='Fecha del Comprobante',
         required=True,
-        readonly=True,
         default=fields.Date.context_today,
         tracking=True,
     )
@@ -128,9 +127,15 @@ class AccountWhIslr(models.Model):
     amount_total_ret = fields.Monetary(
         string='Monto Total Retenido',
         currency_field='currency_id',
-        required=True,
-        readonly=True,
+        compute='_compute_amount_total_ret',
+        inverse='_inverse_amount_total_ret',
+        store=True,
         tracking=True,
+    )
+
+    edit_detail_mode = fields.Boolean(
+        string='Modo Edición de Detalle',
+        default=False,
     )
 
     # ========== CAMPOS RELACIONADOS (Para facilitar búsquedas) ==========
@@ -141,6 +146,14 @@ class AccountWhIslr(models.Model):
         store=True,
         readonly=True,
     )
+
+    @api.depends('line_ids.retention_amount')
+    def _compute_amount_total_ret(self):
+        for rec in self:
+            rec.amount_total_ret = sum(rec.line_ids.mapped('retention_amount'))
+
+    def _inverse_amount_total_ret(self):
+        pass  # Permite escrituras directas desde código externo (e.g. _create_islr_withholding)
 
     @api.depends('move_id.name', 'move_id.l10n_ve_supplier_invoice_number', 'type')
     def _compute_invoice_number(self):
@@ -165,6 +178,20 @@ class AccountWhIslr(models.Model):
         store=True,
         readonly=True,
     )
+
+    next_correlative = fields.Char(
+        string='Próximo Correlativo',
+        compute='_compute_correlatives',
+        store=False,
+    )
+
+    @api.depends('company_id')
+    def _compute_correlatives(self):
+        for rec in self:
+            config = self.env['simplitfiscal.config'].search(
+                [('company_id', '=', rec.company_id.id)], limit=1
+            )
+            rec.next_correlative = config.islr_withholding_sequence_display or ''
 
     state = fields.Selection(
         selection=[
@@ -227,7 +254,7 @@ class AccountWhIslr(models.Model):
             if record.state == 'declared':
                 raise ValidationError(_("No puede eliminar un comprobante que ya ha sido declarado ante el SENIAT."))
 
-    _EMAIL_FIELDS = {'email_state', 'last_email_at', 'last_email_error', 'email_retry_count'}
+    _EMAIL_FIELDS = {'email_state', 'last_email_at', 'last_email_error', 'email_retry_count', 'edit_detail_mode'}
 
     def write(self, vals):
         if any(rec.state == 'declared' for rec in self) and 'state' not in vals:
@@ -240,8 +267,188 @@ class AccountWhIslr(models.Model):
         comodel_name='account.wh.islr.line',
         inverse_name='islr_id',
         string='Líneas del Comprobante',
-        readonly=True,
     )
+
+    def action_enable_detail_edit(self):
+        """Activa el modo de edición manual del detalle de retención."""
+        self.ensure_one()
+        if self.state == 'declared':
+            raise ValidationError(_("No se puede modificar un comprobante declarado ante el SENIAT."))
+        self.edit_detail_mode = True
+
+    def action_apply_detail_changes(self):
+        """
+        Aplica los cambios manuales del detalle de retención:
+        - Recalcula amount_total_ret y amount_to_pay en el comprobante ISLR.
+        - Actualiza l10n_ve_islr_amount en la factura relacionada.
+        - Actualiza la línea contable de retención ISLR directamente.
+        - Registra los cambios en el chatter para trazabilidad.
+        """
+        self.ensure_one()
+        if self.state == 'declared':
+            raise ValidationError(_("No se puede modificar un comprobante declarado ante el SENIAT."))
+
+        old_total_ret = self.amount_total_ret
+        old_amount_to_pay = self.amount_to_pay
+
+        # amount_total_ret ya está computado desde las líneas
+        new_total_ret = sum(self.line_ids.mapped('retention_amount'))
+
+        # Recalcular amount_to_pay: total factura - ret. IVA vigente - nueva ret. ISLR
+        move = self.move_id
+        iva_ret_total = sum(
+            self.env['account.wh.iva'].search([
+                ('move_id', '=', move.id),
+                ('state', '!=', 'cancel'),
+            ]).mapped('amount_total_ret')
+        )
+        new_amount_to_pay = self.amount_total_invoice - iva_ret_total - new_total_ret
+
+        # 1. Actualizar monto ISLR en la factura
+        move.write({'l10n_ve_islr_amount': new_total_ret})
+
+        # 2. Sincronizar campos ISLR en account.move.line (pestaña "Lineas ISLR")
+        ctx = {'check_move_validity': False}
+        for islr_line in self.line_ids:
+            if islr_line.move_line_id:
+                islr_line.move_line_id.with_context(**ctx).write({
+                    'l10n_ve_islr_fiscal_code': islr_line.fiscal_code,
+                    'l10n_ve_islr_subject_percentage': islr_line.subject_amount_percentage,
+                    'l10n_ve_islr_subject_amount': islr_line.subject_amount,
+                    'l10n_ve_islr_base_retention_amount': islr_line.base_retention_amount,
+                    'l10n_ve_islr_retention_percentage': islr_line.retention_percentage,
+                    'l10n_ve_islr_subtrahend': islr_line.subtrahend,
+                    'l10n_ve_islr_amount_line': islr_line.retention_amount,
+                })
+
+        # 3. Actualizar línea contable de retención ISLR en el asiento
+        self._update_islr_move_line(move, old_total_ret, new_total_ret)
+
+        # 4. Actualizar campos del comprobante
+        self.write({
+            'amount_to_pay': new_amount_to_pay,
+            'edit_detail_mode': False,
+        })
+
+        # 4. Log en chatter
+        currency_symbol = self.currency_id.symbol or ''
+        detail_lines = ''.join(
+            f"<li>{(line.concept_id.description or 'Sin concepto')}: "
+            f"<b>{line.retention_amount:,.2f} {currency_symbol}</b></li>"
+            for line in self.line_ids
+        )
+        body = (
+            f"<b>Detalle de retención modificado manualmente por {self.env.user.name}.</b><br/>"
+            f"Total Retenido: {old_total_ret:,.2f} → <b>{new_total_ret:,.2f} {currency_symbol}</b><br/>"
+            f"Monto a Pagar: {old_amount_to_pay:,.2f} → <b>{new_amount_to_pay:,.2f} {currency_symbol}</b><br/>"
+            f"<br/><b>Detalle por línea:</b><ul>{detail_lines}</ul>"
+        )
+        self.message_post(body=body, subtype_xmlid='mail.mt_note')
+
+        _logger.info(
+            "[FISCAL-ISLR] Detalle editado manualmente en comprobante %s. "
+            "Ret: %s → %s. Usuario: %s",
+            self.name or self.id, old_total_ret, new_total_ret, self.env.user.name
+        )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Cambios Aplicados'),
+                'message': _(
+                    'Los montos de retención han sido actualizados. '
+                    'Total retenido: %(ret)s %(sym)s'
+                ) % {'ret': f'{new_total_ret:,.2f}', 'sym': currency_symbol},
+                'type': 'success',
+                'sticky': False,
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
+            }
+        }
+
+    def _update_islr_move_line(self, move, old_total_ret, new_total_ret):
+        """Actualiza directamente la línea contable de retención ISLR en el asiento."""
+        config = self.env['simplitfiscal.config'].search(
+            [('company_id', '=', self.company_id.id)], limit=1
+        )
+        if not config:
+            return
+
+        is_purchase = self.type == 'purchase'
+        islr_account = (
+            config.l10n_ve_islr_account_id_purchase if is_purchase
+            else config.l10n_ve_islr_account_id_sale
+        )
+        if not islr_account:
+            return
+
+        existing_islr_lines = move.line_ids.filtered(
+            lambda l: l.account_id == islr_account and l.display_type == 'tax'
+        )
+        if not existing_islr_lines:
+            return
+
+        company_currency = self.company_id.currency_id
+        invoice_currency = move.currency_id
+        ref_date = move.invoice_date or fields.Date.today()
+        is_multicurrency = invoice_currency and invoice_currency != company_currency
+
+        if is_multicurrency:
+            new_islr_bal = invoice_currency._convert(
+                new_total_ret, company_currency, self.company_id, ref_date
+            )
+            old_islr_bal = invoice_currency._convert(
+                old_total_ret, company_currency, self.company_id, ref_date
+            )
+        else:
+            new_islr_bal = new_total_ret
+            old_islr_bal = old_total_ret
+
+        delta_bal = new_islr_bal - old_islr_bal
+        delta_ac = new_total_ret - old_total_ret
+
+        is_credit_side = move.move_type in ('in_invoice', 'out_refund')
+        islr_line = existing_islr_lines[0]
+
+        if is_credit_side:
+            islr_line_vals = {'credit': new_islr_bal, 'debit': 0.0}
+            if is_multicurrency:
+                islr_line_vals['amount_currency'] = -new_total_ret
+        else:
+            islr_line_vals = {'debit': new_islr_bal, 'credit': 0.0}
+            if is_multicurrency:
+                islr_line_vals['amount_currency'] = new_total_ret
+
+        # Contrapartida AP/AR
+        if is_purchase:
+            counter_line = move.line_ids.filtered(
+                lambda l: l.account_type == 'liability_payable'
+            )
+        else:
+            counter_line = move.line_ids.filtered(
+                lambda l: l.account_type == 'asset_receivable'
+            )
+
+        ctx = {'check_move_validity': False}
+        islr_line.with_context(**ctx).write(islr_line_vals)
+
+        if counter_line:
+            cl = counter_line[0]
+            if is_credit_side:
+                counter_vals = {'credit': max(0.0, cl.credit - delta_bal)}
+                if is_multicurrency:
+                    counter_vals['amount_currency'] = cl.amount_currency + delta_ac
+            else:
+                counter_vals = {'debit': max(0.0, cl.debit + delta_bal)}
+                if is_multicurrency:
+                    counter_vals['amount_currency'] = cl.amount_currency - delta_ac
+            cl.with_context(**ctx).write(counter_vals)
+
+        _logger.info(
+            "[FISCAL-ISLR] Línea contable actualizada en move %s: "
+            "%s → %s (bal: %s → %s)",
+            move.id, old_total_ret, new_total_ret, old_islr_bal, new_islr_bal
+        )
 
     def action_process_withholding(self):
         """
@@ -289,12 +496,70 @@ class AccountWhIslr(models.Model):
     def action_reset_to_draft(self):
         """
         Vuelve el comprobante a estado borrador.
+        En compras valida que sea el último correlativo y hace rollback en el API.
         """
-        for record in self:
-            if record.state != 'posted':
-                raise ValidationError(_("Solo se pueden resetear comprobantes en estado Publicado."))
-            record.write({'state': 'draft'})
-        _logger.info(f"[FISCAL-ISLR] Comprobantes reseteados a borrador.")
+        self.ensure_one()
+        if self.type != 'purchase':
+            raise ValidationError(_('El reverso a borrador solo aplica a retenciones de compra.'))
+
+        if self.state != 'posted':
+            raise ValidationError(_('Solo se pueden resetear comprobantes en estado Publicado.'))
+
+        if self.name:
+            # Verificar que sea el último correlativo activo de la compañía
+            last = self.env['account.wh.islr'].search([
+                ('type', '=', 'purchase'),
+                ('company_id', '=', self.company_id.id),
+                ('name', '!=', False),
+                ('state', 'not in', ['cancel']),
+            ], order='name desc', limit=1)
+
+            if last and last.id != self.id:
+                raise ValidationError(_(
+                    'No puede reversar este comprobante porque la secuencia ya va '
+                    'por el Nro. %s. Debe reversar a partir de ese valor hasta llegar '
+                    'al que desea corregir y luego volver a procesar.'
+                ) % last.name)
+
+            # Rollback del correlativo en el API
+            config = self.env['simplitfiscal.config'].search(
+                [('company_id', '=', self.company_id.id)], limit=1
+            )
+            if config and config.ta_api_key:
+                import requests
+                from .utils import get_api_url
+                api_host = get_api_url()
+                try:
+                    response = requests.patch(
+                        f"{api_host.rstrip('/')}/api/v1/licensing/correlative/rollback",
+                        headers={
+                            'X-API-Key': config.ta_api_key,
+                            'Content-Type': 'application/json',
+                        },
+                        json={'type': 'islr'},
+                        timeout=15,
+                    )
+                    res_data = response.json()
+                    if res_data.get('error') != 0:
+                        raise ValidationError(
+                            res_data.get('message', _('Error al comunicarse con el Servicio Fiscal.'))
+                        )
+                    current = (res_data.get('data') or {}).get('current')
+                    if current:
+                        config.islr_withholding_sequence_display = current
+                    _logger.info(
+                        '[FISCAL-ISLR] Rollback correlativo: %s → %s',
+                        self.name, current,
+                    )
+                except ValidationError:
+                    raise
+                except Exception as e:
+                    raise ValidationError(
+                        _('No se pudo conectar con el Servicio Fiscal: %s') % str(e)
+                    )
+
+        _logger.info('[FISCAL-ISLR] Comprobante reseteado a borrador: Número=%s, ID=%s', self.name, self.id)
+        self.write({'state': 'draft', 'name': False})
         return True
 
     def action_cancel(self):

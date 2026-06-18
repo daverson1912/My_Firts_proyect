@@ -9,6 +9,7 @@ class AccountWhIvaCustomerUnifier(models.TransientModel):
     partner_id = fields.Many2one('res.partner', string='Cliente', readonly=True)
     wh_number = fields.Char(string='Número de Comprobante', required=True)
     date = fields.Date(string='Fecha del Comprobante', required=True, default=fields.Date.today)
+    retention_registration_date = fields.Date(string='Fecha de Registro', required=True, default=fields.Date.today)
     wh_iva_ids = fields.Many2many('account.wh.iva', string='Retenciones a Procesar')
 
     @api.constrains('wh_number')
@@ -26,10 +27,11 @@ class AccountWhIvaCustomerUnifier(models.TransientModel):
         if not self.wh_iva_ids:
             return {'type': 'ir.actions.act_window_close'}
             
-        # Asignar número, fecha y publicar
+        # Asignar número, fechas y publicar
         self.wh_iva_ids.write({
             'name': self.wh_number,
             'date': self.date,
+            'retention_registration_date': self.retention_registration_date,
             'state': 'posted'
         })
         

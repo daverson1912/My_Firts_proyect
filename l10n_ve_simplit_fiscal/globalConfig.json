@@ -1,5 +1,4 @@
-
 {
-    "API_URL": "https://apitotalodoo.totalaplicaciones.com",
-    "IS_DEV": false
+    "API_URL": "http://taodoo-api-qa:5000",
+    "IS_DEV": true
 }

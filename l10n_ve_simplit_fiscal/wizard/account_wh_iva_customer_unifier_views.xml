@@ -4,11 +4,11 @@
         <field name="name">account.wh.iva.customer.unifier.form</field>
         <field name="model">account.wh.iva.customer.unifier</field>
         <field name="arch" type="xml">
-            <form string="Cargar Comprobante de Retención">
+            <form string="Guardar Comprobante">
                 <sheet>
                     <div class="alert alert-info" role="alert" style="margin-bottom:15px;">
-                        <i class="fa fa-info-circle me-1"/> 
-                        <strong>Formato Requerido:</strong> 14 dígitos (Año + Mes + 8 dígitos correlativos). 
+                        <i class="fa fa-info-circle me-1"/>
+                        <strong>Formato Requerido:</strong> 14 dígitos (Año + Mes + 8 dígitos correlativos).
                         Ejemplo: <code style="font-size: 1.1em;">20260500000001</code>
                     </div>
                     <group>
@@ -17,7 +17,8 @@
                             <field name="wh_number" placeholder="Ej: 20260500000001"/>
                         </group>
                         <group>
-                            <field name="date"/>
+                            <field name="date" required="1"/>
+                            <field name="retention_registration_date" required="1"/>
                         </group>
                     </group>
                     
@@ -32,7 +33,7 @@
                     </field>
                 </sheet>
                 <footer>
-                    <button name="action_confirm" string="Guardar Comprobante" type="object" class="btn-primary"/>
+                    <button name="action_confirm" string="Registrar Comprobante" type="object" class="btn-primary"/>
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

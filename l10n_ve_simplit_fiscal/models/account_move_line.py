@@ -83,7 +83,7 @@ class AccountMoveLine(models.Model):
             percentage = line.l10n_ve_islr_retention_percentage
             formatted_amount = "{:,.2f}".format(amount).replace(",", "X").replace(".", ",").replace("X", ".")
             line.l10n_ve_islr_retention_calculation_display = f"{formatted_amount} {symbol} ({int(percentage) if percentage % 1 == 0 else percentage}%)"
-    
+
     def _should_apply_fiscal_replacement(self):
         """
         Determina si se debe aplicar el reemplazo de impuestos fiscales.

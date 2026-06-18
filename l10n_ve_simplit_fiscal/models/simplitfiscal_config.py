@@ -46,6 +46,18 @@ class SimplitFiscalConfig(models.Model):
         ('active', 'Activa'),
     ], string='Estado', default='draft', required=True, tracking=True)
 
+    # ========== TIPO DE CONFIGURACIÓN FISCAL ==========
+
+    l10n_ve_fiscal_config_type = fields.Selection([
+        ('free_form', 'Forma Libre'),
+        ('fiscal_printer', 'Impresora Fiscal'),
+        ('digital_invoice', 'Facturación Digital'),
+    ], string='Tipo de Configuración Fiscal',
+       default='free_form',
+       required=True,
+       tracking=True,
+       help='Define el tipo de emisión de documentos fiscales de la compañía.')
+
     # ========== CONEXIÓN API ==========
 
     ta_api_key = fields.Char(

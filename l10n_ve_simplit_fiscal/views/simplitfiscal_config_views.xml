@@ -47,6 +47,26 @@
                             </group>
                         </group>
                         
+                        <!-- ========== TIPO DE CONFIGURACIÓN FISCAL ========== -->
+                        <group string="Tipo de Configuración de Compañía">
+                            <group>
+                                <field name="l10n_ve_fiscal_config_type" widget="radio"/>
+                            </group>
+                            <group>
+                                <div class="alert alert-info" role="alert"
+                                     invisible="l10n_ve_fiscal_config_type != 'fiscal_printer'">
+                                    <strong>Impresora Fiscal:</strong> Dispondrá de los campos
+                                    <em>Nro Factura Fiscal</em>, <em>Nro de Reporte Z</em> y
+                                    <em>Serial Impresora Fiscal</em> en las facturas de venta.
+                                </div>
+                                <div class="alert alert-info" role="alert"
+                                     invisible="l10n_ve_fiscal_config_type not in ('free_form', 'digital_invoice')">
+                                    <strong>Forma Libre / Facturación Digital:</strong> Dispondrá del campo
+                                    <em>Nro de Control</em> en las facturas de venta.
+                                </div>
+                            </group>
+                        </group>
+
                         <!-- ========== PESTAÑAS PRINCIPALES ========== -->
                         <notebook>
                             <!-- PESTAÑA 1: Configuración General -->

@@ -67,8 +67,9 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
             ('invoice_date', '>=', self.date_from),
             ('invoice_date', '<=', self.date_to),
             ('company_id', '=', self.company_id.id),
+            ('journal_id.l10n_ve_affects_sales_ledger', '=', True),
         ]
-        
+
         if self.report_type == 'daily':
             domain.append(('l10n_ve_has_igtf', '=', True))
             
@@ -110,12 +111,7 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
             else:
                 grp['nc_numbers'].append(num)
                 
-            mc_installed = 'l10n_ve_ta_multicurrency_total_amount' in move._fields
-
-            if mc_installed:
-                grp['total_with_iva'] += (move.l10n_ve_ta_multicurrency_total_amount or 0.0) * sign
-            else:
-                grp['total_with_iva'] += move.amount_total * sign
+            grp['total_with_iva'] += move.amount_total * sign
 
             if move.l10n_ve_has_igtf:
                 factor = move._get_ves_factor() if hasattr(move, '_get_ves_factor') else 1.0
@@ -135,41 +131,29 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
                 taxes = get_line_taxes(line.tax_ids)
                 vat_tax = next((t for t in taxes if t.amount > 0 and 'igtf' not in t.name.lower()), None)
 
-                if mc_installed:
-                    price_subtotal = getattr(line, 'l10n_ve_ta_multicurrency_taxable_amount', 0.0) or 0.0
-                    exempt_amt     = getattr(line, 'l10n_ve_ta_multicurrency_exempt_amount', 0.0) or 0.0
-                    tax_amt        = getattr(line, 'l10n_ve_ta_multicurrency_tax_amount', 0.0) or 0.0
-                else:
-                    # price_subtotal está en la moneda de la factura (VES)
-                    price_subtotal = line.price_subtotal
-                    exempt_amt     = line.price_subtotal
-                    tax_amt        = None  # se calcula desde line_ids abajo
+                price_subtotal = line.price_subtotal
+                exempt_amt     = line.price_subtotal
 
                 if vat_tax:
                     rate = int(round(vat_tax.amount))
                     if rate == 16:
                         grp['general_base'] += price_subtotal * sign
-                        if mc_installed:
-                            grp['general_iva'] += tax_amt * sign
                     elif rate == 8:
                         grp['reduced_base'] += price_subtotal * sign
-                        if mc_installed:
-                            grp['reduced_iva'] += tax_amt * sign
                 else:
-                    grp['exempt_amount'] += (price_subtotal if mc_installed else exempt_amt) * sign
+                    grp['exempt_amount'] += exempt_amt * sign
 
-            if not mc_installed:
-                # IVA desde líneas del asiento en moneda de la factura
-                for tax_line in move.line_ids.filtered(lambda l: l.display_type == 'tax'):
-                    tax_obj = tax_line.tax_line_id
-                    if not tax_obj or 'igtf' in tax_obj.name.lower():
-                        continue
-                    rate = int(round(tax_obj.amount))
-                    tax_amount = abs(tax_line.amount_currency) * sign
-                    if rate == 16:
-                        grp['general_iva'] += tax_amount
-                    elif rate == 8:
-                        grp['reduced_iva'] += tax_amount
+            # IVA desde líneas del asiento en moneda de la factura
+            for tax_line in move.line_ids.filtered(lambda l: l.display_type == 'tax'):
+                tax_obj = tax_line.tax_line_id
+                if not tax_obj or 'igtf' in tax_obj.name.lower():
+                    continue
+                rate = int(round(tax_obj.amount))
+                tax_amount = abs(tax_line.amount_currency) * sign
+                if rate == 16:
+                    grp['general_iva'] += tax_amount
+                elif rate == 8:
+                    grp['reduced_iva'] += tax_amount
 
         _logger.info("LIBRO DE VENTAS: Procesamiento de grupos finalizado. Generando respuesta.")
         ledger_lines = []
@@ -219,8 +203,9 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
             ('invoice_date', '>=', self.date_from),
             ('invoice_date', '<=', self.date_to),
             ('company_id', '=', self.company_id.id),
+            ('journal_id.l10n_ve_affects_sales_ledger', '=', True),
         ]
-        
+
         if self.report_type == 'igtf':
             # Solo facturas con IGTF para el reporte "Detallado IGTF"
             domain.append(('l10n_ve_has_igtf', '=', True))
@@ -242,12 +227,16 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
                         taxes.append(tax)
                 return taxes
 
-            # Retenciones IVA ventas
+            # Retenciones IVA ventas — incluir solo las que la fecha en que el cliente
+            # entregó la retención (retention_registration_date) cae dentro del período
+            # del reporte. Si no tiene fecha de registro se usa date como fallback.
             wh_iva_all = self.env['account.wh.iva'].search([
                 ('move_id', '=', move.id),
                 ('type', '=', 'sale'),
-                ('state', '!=', 'cancel'),
-            ])
+                ('state', 'in', ['posted', 'declared']),
+            ]).filtered(
+                lambda w: self.date_from <= (w.retention_registration_date or w.date) <= self.date_to
+            )
             wh_iva = wh_iva_all[0] if wh_iva_all else False
 
             base_16 = 0.0
@@ -271,50 +260,31 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
                         iva_8  += wh.amount_vat_tax * sign
                     iva_retenido += wh.amount_total_ret * sign
             else:
-                mc_installed = 'l10n_ve_ta_multicurrency_total_amount' in move._fields
-                if mc_installed:
-                    total_c_iva = (move.l10n_ve_ta_multicurrency_total_amount or 0.0) * sign
-                    for line in move.invoice_line_ids:
-                        taxes = get_line_taxes(line.tax_ids)
-                        vat_tax = next((t for t in taxes if t.amount > 0 and 'igtf' not in t.name.lower()), None)
-                        taxable   = getattr(line, 'l10n_ve_ta_multicurrency_taxable_amount', 0.0) or 0.0
-                        exempt_a  = getattr(line, 'l10n_ve_ta_multicurrency_exempt_amount', 0.0) or 0.0
-                        tax_amt   = getattr(line, 'l10n_ve_ta_multicurrency_tax_amount', 0.0) or 0.0
-                        if vat_tax:
-                            rate = int(round(vat_tax.amount))
-                            if rate == 16:
-                                base_16 += taxable * sign
-                                iva_16  += tax_amt * sign
-                            elif rate == 8:
-                                base_8 += taxable * sign
-                                iva_8  += tax_amt * sign
-                        else:
-                            exempt += (exempt_a or taxable) * sign
-                else:
-                    total_c_iva = move.amount_total * sign
-                    for line in move.invoice_line_ids:
-                        taxes = get_line_taxes(line.tax_ids)
-                        vat_tax = next((t for t in taxes if t.amount > 0 and 'igtf' not in t.name.lower()), None)
-                        if vat_tax:
-                            rate = int(round(vat_tax.amount))
-                            if rate == 16:
-                                base_16 += line.price_subtotal * sign
-                            elif rate == 8:
-                                base_8 += line.price_subtotal * sign
-                        else:
-                            exempt += line.price_subtotal * sign
-                    for tax_line in move.line_ids.filtered(lambda l: l.display_type == 'tax'):
-                        tax_obj = tax_line.tax_line_id
-                        if not tax_obj or 'igtf' in tax_obj.name.lower():
-                            continue
-                        rate = int(round(tax_obj.amount))
+                total_c_iva = (move.l10n_ve_doc_total or move.amount_total) * sign
+                for line in move.invoice_line_ids:
+                    taxes = get_line_taxes(line.tax_ids)
+                    vat_tax = next((t for t in taxes if t.amount > 0 and 'igtf' not in t.name.lower()), None)
+                    if vat_tax:
+                        rate = int(round(vat_tax.amount))
                         if rate == 16:
-                            iva_16 += abs(tax_line.amount_currency) * sign
+                            base_16 += line.price_subtotal * sign
                         elif rate == 8:
-                            iva_8 += abs(tax_line.amount_currency) * sign
+                            base_8 += line.price_subtotal * sign
+                    else:
+                        exempt += line.price_subtotal * sign
+                for tax_line in move.line_ids.filtered(lambda l: l.display_type == 'tax'):
+                    tax_obj = tax_line.tax_line_id
+                    if not tax_obj or 'igtf' in tax_obj.name.lower():
+                        continue
+                    rate = int(round(tax_obj.amount))
+                    if rate == 16:
+                        iva_16 += abs(tax_line.amount_currency) * sign
+                    elif rate == 8:
+                        iva_8 += abs(tax_line.amount_currency) * sign
 
-            nro_ret   = wh_iva.name if (wh_iva and wh_iva.name) else ''
-            fecha_ret = wh_iva.date.strftime('%d/%m/%Y') if (wh_iva and wh_iva.date) else ''
+            nro_ret   = wh_iva.name if wh_iva else ''
+            fecha_ret = wh_iva.date if wh_iva else ''
+            retention_registration_date = wh_iva.retention_registration_date if wh_iva else None
 
             # Alícuota dominante del documento
             aliq = 16 if abs(base_16) > 0 else (8 if abs(base_8) > 0 else 0)
@@ -339,10 +309,8 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
                 'rif':            move.partner_id.vat or '',
                 'name':           move.partner_id.name,
                 'doc_type':       'FAC' if move.move_type == 'out_invoice' else 'N/C',
-                'tipo_doc':       'FAC' if move.move_type == 'out_invoice' else 'N/C',
                 'doc_num':        move.l10n_ve_fiscal_invoice_number or move.name,
                 'control_number': move.l10n_ve_control_number or '',
-                'serial':         move.l10n_ve_control_number or '',
                 'tipo_tran':      '01-REG' if move.move_type == 'out_invoice' else '03-REG',
                 'fac_afectada':   move.reversed_entry_id.l10n_ve_fiscal_invoice_number or move.reversed_entry_id.name if move.reversed_entry_id else '',
                 'total_c_iva':    total_c_iva,
@@ -351,28 +319,65 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
                 'base_cnt':  base_total if is_contribuyente else 0.0,
                 'aliq_cnt':  aliq       if is_contribuyente else 0,
                 'iva_cnt':   iva_total  if is_contribuyente else 0.0,
-                'base_contrib': base_total if is_contribuyente else 0.0,
-                'iva_contrib':  iva_total if is_contribuyente else 0.0,
                 # No contribuyentes (alícuota general)
                 'base_ncnt': base_total if not is_contribuyente else 0.0,
                 'aliq_ncnt': aliq       if not is_contribuyente else 0,
                 'iva_ncnt':  iva_total  if not is_contribuyente else 0.0,
-                'base_no_contrib': base_total if not is_contribuyente else 0.0,
-                'iva_no_contrib':  iva_total if not is_contribuyente else 0.0,
                 # Retenciones
                 'ret_base':     ret_base,
                 'ret_iva':      ret_iva_amt,
                 'ret_retenido': iva_retenido,
-                'iva_retenido': iva_retenido,
                 'ret_pct':      ret_pct,
                 'percibido':    percibido,
                 'nro_ret':      nro_ret,
                 'fecha_ret':    fecha_ret,
+                'retention_registration_date': retention_registration_date,
             }
             ledger_lines.append(line_data)
             count += 1
             
         return ledger_lines
+
+    def _get_out_of_month_retentions(self):
+        """Retenciones cuya fecha de entrega (retention_registration_date) cae en el
+        período del reporte pero cuyo comprobante (date) es de un mes anterior.
+        Estas se muestran en la sección 'Retenciones Aplicadas a otros Periodos'."""
+        self.ensure_one()
+        if self.report_type != 'detailed':
+            return []
+        domain = [
+            ('type', '=', 'sale'),
+            ('state', 'in', ['posted', 'declared']),
+            ('retention_registration_date', '>=', self.date_from),
+            ('retention_registration_date', '<=', self.date_to),
+            ('company_id', '=', self.company_id.id),
+        ]
+        records = self.env['account.wh.iva'].search(domain, order='retention_registration_date asc')
+        records = records.filtered(
+            lambda w: w.date.month != w.retention_registration_date.month or
+                      w.date.year != w.retention_registration_date.year
+        )
+        lines = []
+        count = 1
+        for wh in records:
+            sign = -1 if wh.wh_type == 'refund' else 1
+            lines.append({
+                'ope': count,
+                'date': wh.retention_registration_date,
+                'rif': wh.partner_vat or '',
+                'name': wh.partner_id.name,
+                'ret_number': wh.name or '',
+                'affected_doc': wh.invoice_number or '',
+                'affected_date': wh.date,
+                'tran_type': '03-REG',
+                'ret_base': wh.amount_taxable_base * sign,
+                'ret_iva': wh.amount_vat_tax * sign,
+                'ret_retenido': wh.amount_total_ret * sign,
+                'ret_pct': wh.retention_percentage,
+                'percibido': (wh.amount_vat_tax - wh.amount_total_ret) * sign,
+            })
+            count += 1
+        return lines
 
     def action_generate_pdf(self):
         self.ensure_one()
@@ -417,7 +422,7 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
 
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-        sheet = workbook.add_worksheet('Libro de Ventas IGTF')
+        sheet = workbook.add_worksheet('Libro de Ventas IGTF' if self.report_type == 'daily' else 'Libro de Ventas Detallado')
 
         # Formatos
         title_fmt = workbook.add_format({'bold': True, 'font_size': 14, 'align': 'center'})
@@ -430,7 +435,7 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
         sheet.merge_range('A1:G1', self.company_id.name, title_fmt)
         sheet.write('A2', f'RIF: {self.company_id.vat}')
         
-        report_title = 'Libro de Ventas Con IGTF (Resumen Diario)' if self.report_type == 'daily' else 'Libro de Ventas Con IGTF (Detallado)'
+        report_title = 'Libro de Ventas Con IGTF (Resumen Diario)' if self.report_type == 'daily' else 'Libro de Ventas Detallado'
         sheet.merge_range('H1:P1', report_title, title_fmt)
 
         if self.report_type == 'daily':
@@ -479,20 +484,20 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
                 sheet.write(row, 1, str(l['date']), data_fmt)
                 sheet.write(row, 2, l['rif'], data_fmt)
                 sheet.write(row, 3, l['name'], data_fmt)
-                sheet.write(row, 4, l['tipo_doc'], data_fmt)
-                sheet.write(row, 5, l['serial'], data_fmt)
+                sheet.write(row, 4, l['doc_type'], data_fmt)
+                sheet.write(row, 5, l['control_number'], data_fmt)
                 sheet.write(row, 6, l['doc_num'], data_fmt)
                 sheet.write(row, 7, l['tipo_tran'], data_fmt)
                 sheet.write(row, 8, l['fac_afectada'], data_fmt)
                 sheet.write(row, 9, l['total_c_iva'], num_fmt)
                 sheet.write(row, 10, l['exempt'], num_fmt)
-                sheet.write(row, 11, l['base_contrib'], num_fmt)
-                sheet.write(row, 12, l['iva_contrib'], num_fmt)
-                sheet.write(row, 13, l['base_no_contrib'], num_fmt)
-                sheet.write(row, 14, l['iva_no_contrib'], num_fmt)
-                sheet.write(row, 15, l['iva_retenido'], num_fmt)
+                sheet.write(row, 11, l['base_cnt'], num_fmt)
+                sheet.write(row, 12, l['iva_cnt'], num_fmt)
+                sheet.write(row, 13, l['base_ncnt'], num_fmt)
+                sheet.write(row, 14, l['iva_ncnt'], num_fmt)
+                sheet.write(row, 15, l['ret_retenido'], num_fmt)
                 sheet.write(row, 16, l['nro_ret'], data_fmt)
-                sheet.write(row, 17, l['fecha_ret'], data_fmt)
+                sheet.write(row, 17, str(l['retention_registration_date']) if l['retention_registration_date'] else '', data_fmt)
             row += 1
 
         workbook.close()
@@ -501,7 +506,7 @@ class AccountIvaSalesLedgerWizard(models.TransientModel):
         self.write({
             'state': 'done',
             'excel_file': base64.b64encode(output.read()),
-            'excel_filename': f'Libro_Ventas_IGTF_{self.date_from}_{self.date_to}.xlsx'
+            'excel_filename': f'Libro_Ventas_IGTF_{self.date_from}_{self.date_to}.xlsx' if self.report_type == 'daily' else f'Libro_Ventas_Detallado_{self.date_from}_{self.date_to}.xlsx'
         })
         
         return {

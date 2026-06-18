@@ -27,7 +27,7 @@
                                 <div style="font-weight: bold; font-size: 9px;">R.I.F.: <t t-out="o.company_id.vat"/></div>
                             </td>
                             <td style="width: 34%; vertical-align: top; text-align: center; padding: 2px; border: 0 !important;">
-                                <div style="font-weight: bold; margin-bottom: 0; font-size: 11px; text-decoration: underline; text-transform: uppercase;">COMPROBANTE DE RETENCIÓN ISLR</div>
+                                <div style="font-weight: bold; margin-bottom: 0; font-size: 11px; text-transform: uppercase;">COMPROBANTE DE RETENCIÓN ISLR</div>
                                 <div style="font-size: 6px; line-height: 1.1; margin-top: 4px; color: #333;">
                                     Ley de Impuesto Sobre la Renta: "Los agentes de retención están obligados a entregar a los contribuyentes, un comprobante en el que conste el monto de lo pagado o abonado en cuenta y el impuesto retenido."
                                 </div>
@@ -117,29 +117,42 @@
                         <tbody>
                             <t t-set="all_lines" t-value="o.line_ids if o._name == 'account.wh.islr' else o.line_ids.mapped('line_ids')"/>
                             <t t-set="count" t-value="1"/>
+                            <t t-set="sum_base" t-value="0.0"/>
+                            <t t-set="sum_subtrahend" t-value="0.0"/>
+                            <t t-set="sum_retention" t-value="0.0"/>
+
                             <t t-foreach="all_lines" t-as="line">
+                                <t t-set="mc_factor_islr" t-value="line.islr_id.move_id._get_l10n_ve_ta_multicurrency_factor() if ('l10n_ve_ta_multicurrency_total_amount' in line.islr_id.move_id._fields) else 1.0"/>
+                                <t t-set="val_base" t-value="line.base_amount * mc_factor_islr"/>
+                                <t t-set="val_sub" t-value="line.subtrahend * mc_factor_islr"/>
+                                <t t-set="val_ret" t-value="line.retention_amount * mc_factor_islr"/>
+
+                                <t t-set="sum_base" t-value="sum_base + val_base"/>
+                                <t t-set="sum_subtrahend" t-value="sum_subtrahend + val_sub"/>
+                                <t t-set="sum_retention" t-value="sum_retention + val_ret"/>
+
                                 <tr style="text-align: center;">
                                     <td><t t-out="count"/><t t-set="count" t-value="count+1"/></td>
                                     <td><t t-out="line.invoice_date" t-options='{"widget": "date"}'/></td>
                                     <td>Factura</td>
                                     <td><t t-out="line.invoice_number"/></td>
                                     <td style="text-align: right;">
-                                        <t t-out="'{0:,.2f}'.format(line.base_amount).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                        <t t-out="'{0:,.2f}'.format(val_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                     </td>
                                     <td style="text-align: right;">
-                                        <t t-out="'{0:,.2f}'.format(line.base_amount).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                        <t t-out="'{0:,.2f}'.format(val_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                     </td>
                                     <td style="text-align: right;">
-                                        <t t-out="'{0:,.2f}'.format(line.base_amount).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                        <t t-out="'{0:,.2f}'.format(val_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                     </td>
                                     <td style="text-align: right;">
-                                        <t t-out="'{0:,.2f}'.format(line.subtrahend).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                        <t t-out="'{0:,.2f}'.format(val_sub).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                     </td>
                                     <td>
                                         <t t-out="int(line.retention_percentage) if line.retention_percentage % 1 == 0 else line.retention_percentage"/>%
                                     </td>
                                     <td style="text-align: right; font-weight: bold;">
-                                        <t t-out="'{0:,.2f}'.format(line.retention_amount).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                        <t t-out="'{0:,.2f}'.format(val_ret).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                     </td>
                                 </tr>
                                 <tr>
@@ -152,23 +165,20 @@
                             <tr class="totals-row" style="text-align: right;">
                                 <td colspan="4" style="text-align: right; padding-right: 5px;">TOTALES:</td>
                                 <td>
-                                    <t t-set="total_base" t-value="sum(all_lines.mapped('base_amount'))"/>
-                                    <t t-out="'{0:,.2f}'.format(total_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                    <t t-out="'{0:,.2f}'.format(sum_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                 </td>
                                 <td>
-                                    <t t-out="'{0:,.2f}'.format(total_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                    <t t-out="'{0:,.2f}'.format(sum_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                 </td>
                                 <td>
-                                    <t t-out="'{0:,.2f}'.format(total_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                    <t t-out="'{0:,.2f}'.format(sum_base).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                 </td>
                                 <td>
-                                    <t t-set="total_sub" t-value="sum(all_lines.mapped('subtrahend'))"/>
-                                    <t t-out="'{0:,.2f}'.format(total_sub).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                    <t t-out="'{0:,.2f}'.format(sum_subtrahend).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                 </td>
                                 <td/>
                                 <td>
-                                    <t t-set="total_ret" t-value="sum(all_lines.mapped('retention_amount'))"/>
-                                    <t t-out="'{0:,.2f}'.format(total_ret).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
+                                    <t t-out="'{0:,.2f}'.format(sum_retention).replace(',', 'X').replace('.', ',').replace('X', '.')"/>
                                 </td>
                             </tr>
                         </tbody>
@@ -176,18 +186,28 @@
 
                     <table frame="void" rules="none" border="0" cellpadding="0" cellspacing="0" style="width: 100%; margin-top: 40px; border: 0 !important; page-break-inside: avoid;">
                         <tr style="border: 0 !important;">
-                            <td style="width: 50%; text-align: center; border: 0 !important; vertical-align: top;">
-                                <div style="width: 80%; border-top: 0.5px solid #000; margin: 0 auto;"/>
-                                <div style="font-weight: bold; font-size: 6px; margin-top: 5px;">FIRMA Y SELLO AGENTE DE RETENCIÓN</div>
-                            </td>
-                            <td style="width: 50%; text-align: center; border: 0 !important; vertical-align: top;">
-                                <table frame="void" rules="none" border="0" cellpadding="0" cellspacing="0" style="width: 80%; margin: 0 auto; font-size: 6px; text-align: left; border: 0 !important;">
-                                    <tr style="border: 0 !important;"><td style="padding-bottom: 3px; border: 0 !important;">Nombre: ________________________________</td></tr>
-                                    <tr style="border: 0 !important;"><td style="padding-bottom: 3px; border: 0 !important;">Cédula: ________________________________</td></tr>
-                                    <tr style="border: 0 !important;"><td style="padding-bottom: 8px; border: 0 !important;">Fecha de Entrega: ____ / ____ / _________</td></tr>
+                            <td style="width: 50%; text-align: center; border: 0 !important; vertical-align: top; padding-right: 10px;">
+                                <table frame="void" rules="none" border="0" cellpadding="0" cellspacing="0" style="width: 60%; margin: 0 auto; font-size: 6px; text-align: left; border: 0 !important;">
+                                    <tr style="border: 0 !important;">
+                                        <td style="padding-bottom: 3px; border: 0 !important; text-align: center;">
+                                            <img t-if="o.company_id.l10n_ve_agent_signature" t-att-src="image_data_uri(o.company_id.l10n_ve_agent_signature)" style="max-height: 80px; max-width: 180px;"/>
+                                        </td>
+                                    </tr>
                                     <tr style="border: 0 !important;">
                                         <td style="padding-top: 8px; border-top: 0.5px solid #000 !important; border-left: 0 !important; border-right: 0 !important; border-bottom: 0 !important; text-align: center;">
-                                            <div style="font-weight: bold; font-size: 6px;">FIRMA DEL BENEFICIARIO</div>
+                                            <div style="font-weight: bold; font-size: 6px; text-transform: uppercase;">FIRMA Y SELLO AGENTE DE RETENCIÓN</div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="width: 50%; text-align: center; border: 0 !important; vertical-align: top; padding-left: 10px;">
+                                <table frame="void" rules="none" border="0" cellpadding="0" cellspacing="0" style="width: 60%; margin: 0 auto; font-size: 6px; text-align: left; border: 0 !important;">
+                                    <tr style="border: 0 !important;"><td style="padding-bottom: 3px; border: 0 !important;">Nombre: ______________________</td></tr>
+                                    <tr style="border: 0 !important;"><td style="padding-bottom: 3px; border: 0 !important;">Cédula: ______________________</td></tr>
+                                    <tr style="border: 0 !important;"><td style="padding-bottom: 8px; border: 0 !important;">Fecha de Entrega: ___ / ___ / _______</td></tr>
+                                    <tr style="border: 0 !important;">
+                                        <td style="padding-top: 8px; border-top: 0.5px solid #000 !important; border-left: 0 !important; border-right: 0 !important; border-bottom: 0 !important; text-align: center;">
+                                            <div style="font-weight: bold; font-size: 6px; text-transform: uppercase;">FIRMA DEL BENEFICIARIO</div>
                                         </td>
                                     </tr>
                                 </table>

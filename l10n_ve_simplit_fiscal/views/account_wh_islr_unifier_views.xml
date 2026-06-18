@@ -7,7 +7,7 @@
         <field name="model">account.wh.islr</field>
         <field name="arch" type="xml">
             <search string="Unificador de Retenciones ISLR">
-                <field name="partner_id" string="Proveedor"/>
+                <field name="partner_id" string="Contacto"/>
                 <field name="name" string="Nº Retención"/>
                 <field name="date" string="Fecha"/>
                 
@@ -16,7 +16,7 @@
                 <filter string="Publicadas" name="posted" domain="[('state', '=', 'posted')]"/>
                 
                 <group expand="0" string="Agrupar Por">
-                    <filter string="Proveedor" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Contacto" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="Mes" name="group_date" context="{'group_by': 'date:month'}"/>
                 </group>
@@ -41,7 +41,7 @@
                 
                 <field name="name" string="Comprobante" width="120px"/>
                 <field name="date" string="Fecha" width="100px"/>
-                <field name="partner_id" string="Proveedor" width="200px"/>
+                <field name="partner_id" string="Contacto" width="200px"/>
                 <field name="move_id" string="Documento" width="150px"/>
                 <field name="amount_total_invoice" string="Monto Documento" width="120px" sum="Total Bruto" optional="show"/>
                 <field name="amount_total_ret" string="Monto Retenido" width="120px" sum="Total Retenido"/>
@@ -67,7 +67,6 @@
         <field name="domain">[('type', '=', 'purchase')]</field>
         <field name="context">{
             'search_default_draft': 1,
-            'group_by': 'partner_id',
             'default_type': 'purchase',
         }</field>
     </record>

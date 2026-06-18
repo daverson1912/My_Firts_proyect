@@ -57,6 +57,9 @@ Estructura:
         'wizard/account_igtf_report_views.xml',           # Reporte IGTF General
         'wizard/account_iva_sales_ledger_views.xml',      # Libro de Ventas con IGTF
         'wizard/account_iva_purchase_ledger_views.xml',  # Libro de Compras IVA
+        'wizard/account_iva_resumen_views.xml',           # Resumen de IVA
+        'report/resumen_iva_report.xml',                  # Resumen IVA Report
+        'report/resumen_iva_templates.xml',               # Resumen IVA Templates
         'report/account_wh_iva_templates.xml',   # Template del reporte
         'report/account_wh_islr_templates.xml',  # Template ISLR
         'views/simplitfiscal_config_views.xml',  # Config views

@@ -29,3 +29,5 @@ access_account_iva_sales_ledger_wizard,account.iva.sales.ledger.wizard,l10n_ve_s
 access_account_wh_iva_customer_unifier,account.wh.iva.customer.unifier,model_account_wh_iva_customer_unifier,base.group_user,1,1,1,1
 access_account_wh_islr_customer_unifier,account.wh.islr.customer.unifier,model_account_wh_islr_customer_unifier,base.group_user,1,1,1,1
 access_wh_email_background_service,wh.email.background.service,model_wh_email_background_service,account.group_account_manager,1,1,1,1
+access_account_iva_resumen_wizard,account.iva.resumen.wizard,l10n_ve_simplit_fiscal.model_account_iva_resumen_wizard,base.group_user,1,1,1,1
+

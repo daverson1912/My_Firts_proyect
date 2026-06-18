@@ -40,7 +40,7 @@
                     <field name="l10n_ve_islr_provider_type_id" readonly="1"/>
                 </div>
 
-                <div invisible="not l10n_ve_partner_retention_type or move_type not in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund')" 
+                <div invisible="not l10n_ve_partner_retention_type or move_type not in ('in_invoice', 'in_refund')"
                      style="margin-top: 4px;">
                     <span class="fw-bold me-2">Retencion IVA:</span>
                     
@@ -100,21 +100,22 @@
 
             <!-- Agregar Número de Control y Campos Fiscales de Venta -->
             <xpath expr="//field[@name='ref']" position="after">
+                <field name="l10n_ve_fiscal_config_type" invisible="1"/>
                 <field name="l10n_ve_control_number"
                        readonly="state != 'draft'"
-                       invisible="move_type not in ('in_invoice', 'in_refund', 'out_invoice', 'out_refund')"
+                       invisible="move_type not in ('in_invoice', 'in_refund') and (move_type not in ('out_invoice', 'out_refund') or l10n_ve_fiscal_config_type == 'fiscal_printer')"
                        required="move_type in ('in_invoice', 'in_refund') and country_code == 'VE'"/>
                 <field name="l10n_ve_supplier_invoice_number"
                        invisible="move_type not in ('in_invoice', 'in_refund')"
                        required="move_type in ('in_invoice', 'in_refund') and country_code == 'VE'"/>
-                
+
                 <!-- Campos de Venta / IGTF / Impresora Fiscal -->
                 <field name="l10n_ve_has_igtf" invisible="move_type not in ('out_invoice', 'out_refund')"/>
                 <field name="l10n_ve_igtf_amount" invisible="not l10n_ve_has_igtf or move_type not in ('out_invoice', 'out_refund')"/>
                 <field name="l10n_ve_igtf_percentage" invisible="not l10n_ve_has_igtf or move_type not in ('out_invoice', 'out_refund')"/>
-                <field name="l10n_ve_fiscal_invoice_number" invisible="move_type not in ('out_invoice', 'out_refund')"/>
-                <field name="l10n_ve_fiscal_z_number" invisible="move_type not in ('out_invoice', 'out_refund')"/>
-                <field name="l10n_ve_fiscal_printer_serial" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="l10n_ve_fiscal_invoice_number" invisible="move_type not in ('out_invoice', 'out_refund') or l10n_ve_fiscal_config_type != 'fiscal_printer'"/>
+                <field name="l10n_ve_fiscal_z_number" invisible="move_type not in ('out_invoice', 'out_refund') or l10n_ve_fiscal_config_type != 'fiscal_printer'"/>
+                <field name="l10n_ve_fiscal_printer_serial" invisible="move_type not in ('out_invoice', 'out_refund') or l10n_ve_fiscal_config_type != 'fiscal_printer'"/>
             </xpath>
 
             <!-- Reorganización del Pie de Página (Totales) -->
@@ -131,7 +132,7 @@
                 <attribute name="invisible">l10n_ve_show_summary</attribute>
             </xpath>
 
-            <!-- Resumen fiscal: Gravable → Exento → Descuento → Subtotal → IVA → Total → Ret.IVA → Ret.ISLR → Monto a Pagar -->
+            <!-- Resumen fiscal: Gravable → Exento → Descuento → Subtotal → IVA → Total → Ret.IVA → Ret.ISLR → Impuesto IGTF → Monto a Pagar -->
             <xpath expr="//field[@name='l10n_ve_amount_to_pay']" position="before">
                 <field name="l10n_ve_show_summary" invisible="1"/>
 
@@ -161,8 +162,11 @@
                 <field name="l10n_ve_doc_ret_islr" string="Ret. ISLR"
                        invisible="not l10n_ve_show_summary or l10n_ve_doc_ret_islr == 0"
                        widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                <field name="l10n_ve_doc_igtf" string="Impuesto IGTF"
+                       invisible="not l10n_ve_show_summary or not l10n_ve_has_igtf or move_type not in ('out_invoice', 'out_refund')"
+                       widget="monetary" options="{'currency_field': 'currency_id'}"/>
                 <field name="l10n_ve_doc_amount_to_pay" string="Monto a Pagar"
-                       invisible="not l10n_ve_show_summary or (l10n_ve_doc_ret_iva == 0 and l10n_ve_doc_ret_islr == 0)"
+                       invisible="not l10n_ve_show_summary"
                        class="oe_subtotal_footer_separator" decoration-bf="1"
                        widget="monetary" options="{'currency_field': 'currency_id'}"/>
             </xpath>
