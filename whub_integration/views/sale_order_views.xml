@@ -16,7 +16,35 @@
             <xpath expr="//field[@name='payment_term_id']" position="after">
                 <field name="whub_invoice_id" readonly="1" invisible="not whub_invoice_id"/>
             </xpath>
-
+            <xpath expr="//page[@name='other_information']" position="inside">
+                <group string="Datos del Aviso de Cobro en WispHub" invisible="not whub_invoice_id">
+                    <group>
+                        <field name="whub_status" readonly="1"/>
+                        <field name="whub_due_date" readonly="1"/>
+                        <field name="whub_payment_date" readonly="1"/>
+                    </group>
+                    <group>
+                        <field name="whub_amount" readonly="1"/>
+                        <field name="whub_sub_total" readonly="1"/>
+                        <field name="whub_discount" readonly="1"/>
+                        <field name="whub_total_taxes" readonly="1"/>
+                        <field name="whub_total_collected" readonly="1"/>
+                        <field name="whub_retention_percentage" readonly="1"/>
+                        <field name="whub_total_retentions" readonly="1"/>
+                    </group>
+                </group>
+            </xpath>
+            <!-- Ocultar cupón/recompensa/descuento manual: no aplica a órdenes generadas
+                 automáticamente desde un aviso de cobro de WispHub. -->
+            <xpath expr="//button[@name='%(sale_loyalty.sale_loyalty_coupon_wizard_action)d']" position="attributes">
+                <attribute name="invisible">whub_invoice_id</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_open_reward_wizard']" position="attributes">
+                <attribute name="invisible">whub_invoice_id</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_open_discount_wizard']" position="attributes">
+                <attribute name="invisible">whub_invoice_id</attribute>
+            </xpath>
         </field>
     </record>
 

@@ -19,6 +19,20 @@ class SaleOrder(models.Model):
         index=True, copy=False
     )
 
+    # --- Datos de referencia del aviso de cobro original en WispHub ---
+    # No alteran el cálculo de Odoo (amount_total sigue siendo cantidad x precio
+    # de las líneas); se guardan tal cual los reporta WispHub para consulta/auditoría.
+    whub_status = fields.Char(string='Estado en WispHub', copy=False)
+    whub_due_date = fields.Date(string='Vencimiento WispHub', copy=False)
+    whub_payment_date = fields.Date(string='Fecha de Pago WispHub', copy=False)
+    whub_amount = fields.Monetary(string='Total WispHub', copy=False)
+    whub_sub_total = fields.Monetary(string='Subtotal WispHub', copy=False)
+    whub_discount = fields.Monetary(string='Descuento WispHub', copy=False)
+    whub_total_taxes = fields.Monetary(string='Impuestos WispHub', copy=False)
+    whub_total_collected = fields.Monetary(string='Total Cobrado WispHub', copy=False)
+    whub_retention_percentage = fields.Float(string='% Retención WispHub', copy=False)
+    whub_total_retentions = fields.Monetary(string='Retenciones WispHub', copy=False)
+
     _sql_constraints = [
         ('whub_invoice_id_unique',
          'unique(whub_invoice_id)',

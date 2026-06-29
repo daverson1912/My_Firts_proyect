@@ -7,11 +7,12 @@
             <form string="Homologación WispHub" create="0" delete="0">
                 <header>
                     <button name="action_return_to_settings" string=" Volver" type="object" class="btn-secondary" icon="fa-arrow-left"/>
-                    <button name="action_load_wisphub_data" string="Traer datos de WispHub" type="object" class="btn-primary" icon="fa-refresh" confirm="Esta acción sincronizará los datos más recientes desde WispHub (categorías, productos, planes y clientes). Los vínculos de homologación que no hayan sido guardados se perderán. ¿Desea continuar?"/>
+                    <button name="action_load_wisphub_data" string="Traer datos de WispHub" type="object" class="btn-primary" icon="fa-refresh" 
+                            confirm="Esta acción sincronizará los datos más recientes desde WispHub (categorías, productos, planes y clientes). Los vínculos de homologación que no hayan sido guardados se perderán. ¿Desea continuar?"/>
                 </header>
 
                 <sheet>
-                    <!-- Campo técnico para control de visibilidad -->
+                    <!-- Campos técnicos para control de visibilidad -->
                     <field name="active_section" invisible="1"/>
                     <field name="has_selection" invisible="1"/>
 
@@ -113,6 +114,7 @@
                             <list editable="bottom" create="false" delete="false" limit="80">
                                 <field name="is_selected" string="Seleccionado" width="100px" readonly="0"/>
                                 <field name="whub_product_name" readonly="1" decoration-bf="1" string="Producto WispHub" optional="show"/>
+                                <field name="whub_description" readonly="1" string="Descripción WispHub" optional="show"/>
                                 <field name="whub_category_name" readonly="1" widget="badge" string="Categoría WispHub" optional="show"/>
                                 <field name="odoo_product_id" string="Producto Odoo" readonly="1" optional="show"/>
                                 <field name="odoo_product_categ_name" readonly="1" string="Categoría Odoo" optional="show"/>
@@ -173,6 +175,8 @@
                                 <field name="is_selected" string="Seleccionado" width="100px" readonly="0"/>
                                 <field name="whub_customer_name" readonly="1" decoration-bf="1" string="Cliente WispHub" optional="show"/>
                                 <field name="whub_fiscal_id" string="Cédula/RIF" readonly="1" optional="show"/>
+                                <field name="whub_phone" string="Teléfono" readonly="1" optional="hide"/>
+                                <field name="whub_email" string="Email" readonly="1" optional="hide"/>
                                 <field name="odoo_partner_id" string="Contacto Odoo" readonly="1" optional="show"/>
                                 <field name="whub_customer_id" optional="hide" readonly="1" string="ID WispHub"/>
                             </list>
@@ -192,13 +196,16 @@
         <field name="arch" type="xml">
             <form string="Homologar Seleccionados">
                 <sheet>
-                    <div class="alert alert-info py-2">
-                        <i class="fa fa-link me-2"/> Seleccione el registro de Odoo correspondiente para cada elemento marcado.
+                    <div class="alert alert-info py-3 mb-3">
+                        <h5 class="alert-heading mb-2"><i class="fa fa-link me-2"/>Homologación de Registros por Lote</h5>
+                        <p class="mb-0">Seleccione el registro de Odoo correspondiente para cada uno de los elementos marcados. Esto establecerá el vínculo de homologación en la base de datos.</p>
                     </div>
                     <field name="res_type" invisible="1"/>
                     <field name="line_ids">
                         <list editable="bottom" create="false" delete="false">
                             <field name="name" string="Elemento de WispHub" readonly="1"/>
+                            <field name="whub_description" readonly="1" string="Descripción WispHub" optional="show"
+                                   column_invisible="parent.res_type != 'product'"/>
                             <field name="whub_id" column_invisible="True"/>
                             <field name="res_type" column_invisible="True"/>
                             <field name="odoo_category_id" column_invisible="parent.res_type != 'category'" string="Categoría Odoo" options="{'no_create': True}"/>
@@ -226,15 +233,22 @@
 
                 </header>
                 <sheet>
-                    <div class="alert alert-info py-2">
-                        <i class="fa fa-info-circle me-2"/>
-                        Seleccione los registros de WispHub que desea crear automáticamente en Odoo.
+                    <div class="alert alert-info py-3 mb-3">
+                        <h5 class="alert-heading mb-2"><i class="fa fa-info-circle me-2"/>Asistente de Creación Automática</h5>
+                        <p class="mb-0">Seleccione los elementos de WispHub que desea crear en Odoo de forma masiva. Para los productos, puede configurar cómo estructurar el nombre resultante (nombre original, nombre con descripción o solo descripción) en la columna <strong>Formato Nombre</strong>.</p>
                     </div>
+                    <field name="has_product_lines" invisible="1"/>
                     <field name="line_ids">
                         <list editable="bottom" create="false" delete="false">
                             <field name="is_selected" string="Crear" class="text-center"/>
                             <field name="res_type" string="Tipo de Registro" readonly="1" class="text-center"/>
                             <field name="name" readonly="1"/>
+                            <field name="whub_description" readonly="1" string="Descripción WispHub" optional="show"
+                                   invisible="res_type != 'product'"
+                                   column_invisible="not parent.has_product_lines"/>
+                            <field name="creation_name_option" string="Formato Nombre"
+                                   invisible="res_type != 'product'"
+                                   column_invisible="not parent.has_product_lines"/>
                             <field name="whub_id" column_invisible="True"/>
                         </list>
                     </field>

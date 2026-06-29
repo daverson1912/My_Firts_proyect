@@ -41,7 +41,7 @@
               sequence="10"/>
 
     <menuitem id="menu_whub_sync_date_query"
-              name="Consultar Avisos por Fechas"
+              name="Sincronizar Avisos de Cobro"
               parent="menu_whub_operations"
               action="action_whub_notice_sync_wizard"
               sequence="20"/>

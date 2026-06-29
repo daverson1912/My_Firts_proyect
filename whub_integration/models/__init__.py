@@ -9,3 +9,4 @@ from . import whub_notice_sync_engine
 from . import whub_notice_sync_log
 from . import whub_notice_sync_wizard
 from . import wizard_homologation
+from . import whub_notice_resolve_wizard

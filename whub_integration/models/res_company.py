@@ -11,7 +11,6 @@ class ResCompany(models.Model):
     # Parámetros del Middleware / Middleware Settings
     whub_middleware_url = fields.Char(string='URL del Middleware')
     whub_allowed_notice_statuses = fields.Char(string='Estados de Avisos Permitidos', default='pending,pendiente,pendiente de pago,unpaid')
-    whub_notice_sync_days_back = fields.Integer(string='Días Sincronización hacia atrás', default=30)
     whub_customers_page_size = fields.Integer(string='Tamaño de página de Clientes', default=200)
     whub_customers_max_pages = fields.Integer(string='Páginas máximas de Clientes', default=50)
 
@@ -21,4 +20,6 @@ class ResCompany(models.Model):
     whub_sync_prod = fields.Datetime(string='Sinc. Productos', readonly=True)
     whub_sync_plan = fields.Datetime(string='Sinc. Planes', readonly=True)
     whub_sync_cust = fields.Datetime(string='Sinc. Clientes', readonly=True)
-    whub_sync_inv = fields.Datetime(string='Sinc. Avisos de Cobro', readonly=True)
+    whub_sync_inv = fields.Datetime(string='Punto de Partida (Avisos de Cobro)', readonly=True,
+                                     help="Fecha y hora de la última orden de venta sincronizada. "
+                                          "El cron de Avisos de Cobro continúa automáticamente desde aquí.")

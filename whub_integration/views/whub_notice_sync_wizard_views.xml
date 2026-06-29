@@ -5,23 +5,19 @@
         <field name="name">whub.notice.sync.wizard.form</field>
         <field name="model">whub.notice.sync.wizard</field>
         <field name="arch" type="xml">
-            <form string="Consultar Avisos por Fechas">
+            <form string="Sincronizar Avisos de Cobro">
                 <sheet>
                     <group>
-                        <group string="Rango de Fechas">
-                            <field name="date_from"/>
-                            <field name="date_to"/>
-                        </group>
-                        <group string="Margen de Búsqueda">
-                            <field name="days_back"/>
-                        </group>
+                        <field name="date_from" string="Punto de Inicio"/>
                     </group>
                     <div class="alert alert-info" role="alert">
-                        Este wizard sincronizará los avisos de cobro de WispHub en el rango de fechas seleccionado.
+                        Se traerán todas las órdenes de venta desde este punto de inicio hasta ahora.
+                        Luego, el cron automático continuará cada 20 minutos desde la fecha/hora de la
+                        última orden encontrada.
                     </div>
                 </sheet>
                 <footer>
-                    <button name="action_sync_by_dates" string="Consultar Avisos" type="object" class="oe_highlight"/>
+                    <button name="action_sync_from_date" string="Sincronizar" type="object" class="oe_highlight"/>
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -30,7 +26,7 @@
 
     <!-- Acción para abrir el wizard -->
     <record id="action_whub_notice_sync_wizard" model="ir.actions.act_window">
-        <field name="name">Consultar Avisos por Fechas</field>
+        <field name="name">Sincronizar Avisos de Cobro</field>
         <field name="res_model">whub.notice.sync.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

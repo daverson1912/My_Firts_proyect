@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Acción contextual para consultar por fechas -->
-    <record id="action_whub_notice_sync_log_dates" model="ir.actions.server">
-        <field name="name">Consultar por Fechas</field>
+    <!-- Acción contextual para re-procesar masivamente desde el menú Acciones -->
+    <record id="action_whub_notice_sync_log_reprocess_multi" model="ir.actions.server">
+        <field name="name">Re-procesar Seleccionados</field>
         <field name="model_id" ref="model_whub_notice_sync_log"/>
+        <field name="binding_model_id" ref="model_whub_notice_sync_log"/>
+        <field name="binding_view_types">list</field>
         <field name="state">code</field>
         <field name="code">
-            action = {
-                'type': 'ir.actions.act_window',
-                'res_model': 'whub.notice.sync.wizard',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': {},
-            }
+            if records:
+                action = records.action_reprocess_multi()
         </field>
     </record>
 
@@ -23,10 +20,10 @@
         <field name="arch" type="xml">
             <list string="Log de Avisos de Cobro" 
                   decoration-success="state == 'success'" 
-                  decoration-danger="state in ('error_mapping', 'error_connection', 'error_other')"
+                  decoration-danger="state in ('error_mapping', 'error_connection')"
                   create="false" edit="false">
                 <header>
-                    <button name="action_open_date_wizard" string="Consultar por Fechas" type="object"
+                    <button name="action_reprocess_multi" string="Re-procesar Seleccionados" type="object"
                             class="btn-primary"/>
                 </header>
                 <field name="sync_date"/>
@@ -96,11 +93,133 @@
         </field>
     </record>
 
+    <!-- Vista de Búsqueda del Log de Avisos (Filtros rápidos) -->
+    <record id="view_whub_notice_sync_log_search" model="ir.ui.view">
+        <field name="name">whub.notice.sync.log.search</field>
+        <field name="model">whub.notice.sync.log</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Logs de Avisos">
+                <field name="whub_invoice_id" string="ID Aviso WispHub"/>
+                <field name="customer_name_wh" string="Nombre Cliente WH"/>
+                <field name="partner_id" string="Cliente Odoo"/>
+                <field name="error_message" string="Mensaje de Error"/>
+                
+                <filter string="Exitosos" name="filter_success" domain="[('state', '=', 'success')]"/>
+                <filter string="Con Errores" name="filter_errors" domain="[('state', 'in', ('error_mapping', 'error_connection'))]"/>
+                <filter string="Errores de Mapeo" name="filter_mapping_errors" domain="[('state', '=', 'error_mapping')]"/>
+                <filter string="Errores de Conexión" name="filter_connection_errors" domain="[('state', '=', 'error_connection')]"/>
+                
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Estado" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="Cliente" name="group_by_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Fecha de Sincronización" name="group_by_date" context="{'group_by': 'sync_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Vista Formulario del Asistente de Resolución -->
+    <record id="view_whub_notice_resolve_wizard_form" model="ir.ui.view">
+        <field name="name">whub.notice.resolve.wizard.form</field>
+        <field name="model">whub.notice.resolve.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Corregir Homologación Faltante">
+                <sheet>
+                    <field name="missing_entity" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    
+                    <div class="alert alert-warning text-center" role="alert" style="margin-bottom: 20px;">
+                        <span>
+                            El aviso no pudo procesarse porque falta homologar el 
+                            <strong>
+                                <field name="missing_entity" readonly="1"/>
+                            </strong>.
+                        </span>
+                    </div>
+
+                    <group>
+                        <!-- Sección de Cliente -->
+                        <group string="Datos del Cliente en WispHub" invisible="missing_entity != 'cliente'">
+                            <field name="customer_name_wh" readonly="1"/>
+                            <field name="customer_id_wh" readonly="1"/>
+                        </group>
+                        <group string="Homologación en Odoo" invisible="missing_entity != 'cliente'">
+                            <field name="odoo_partner_id" required="missing_entity == 'cliente'" 
+                                   placeholder="Seleccione el contacto correspondiente en Odoo..."/>
+                        </group>
+
+                        <!-- Sección de Producto -->
+                        <group string="Datos del Concepto en WispHub" invisible="missing_entity != 'producto'">
+                            <field name="concept_name_wh" readonly="1"/>
+                            <field name="concept_price_wh" readonly="1"/>
+                        </group>
+                        <group string="Homologación en Odoo" invisible="missing_entity != 'producto'">
+                            <field name="odoo_product_id" required="missing_entity == 'producto'"
+                                   placeholder="Seleccione el producto correspondiente en Odoo..."/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm_resolve" string="Asociar y Re-procesar" type="object" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista Formulario del Asistente de Resolución Masiva -->
+    <record id="view_whub_notice_resolve_batch_wizard_form" model="ir.ui.view">
+        <field name="name">whub.notice.resolve.batch.wizard.form</field>
+        <field name="model">whub.notice.resolve.batch.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Validación de Homologaciones Pendientes">
+                <sheet>
+                    <field name="company_id" invisible="1"/>
+                    <field name="log_ids" invisible="1"/>
+
+                    <div class="alert alert-info text-center" role="alert" style="margin-bottom: 16px;">
+                        <strong>
+                            <field name="total_selected" readonly="1" widget="integer" class="d-inline"/> registros seleccionados —
+                            <field name="total_mapping_errors" readonly="1" widget="integer" class="d-inline"/> con errores de mapeo.
+                        </strong>
+                        <br/>
+                        <span>Asocie cada entidad faltante con su equivalente en Odoo y luego haga clic en "Asociar y Re-procesar".</span>
+                    </div>
+
+                    <separator string="Clientes No Homologados"/>
+                    <field name="customer_line_ids" nolabel="1">
+                        <list editable="bottom" create="false" delete="false">
+                            <field name="company_id" column_invisible="1"/>
+                            <field name="customer_id_wh" string="ID WispHub"/>
+                            <field name="customer_name_wh" string="Nombre en WispHub"/>
+                            <field name="odoo_partner_id" string="Contacto en Odoo" options="{'no_create': True}"/>
+                        </list>
+                    </field>
+
+                    <separator string="Productos / Planes No Homologados"/>
+                    <field name="product_line_ids" nolabel="1">
+                        <list editable="bottom" create="false" delete="false">
+                            <field name="company_id" column_invisible="1"/>
+                            <field name="concept_name_wh" string="Concepto en WispHub"/>
+                            <field name="concept_price_wh" string="Precio"/>
+                            <field name="odoo_product_id" string="Producto en Odoo" options="{'no_create': True}"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="action_confirm_resolve" string="Asociar y Re-procesar" type="object" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
     <!-- Acción para abrir el log de avisos -->
     <record id="action_whub_notice_sync_log" model="ir.actions.act_window">
         <field name="name">Log de Sincronización de Avisos</field>
         <field name="res_model">whub.notice.sync.log</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_whub_notice_sync_log_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Aquí aparecerán los resultados de la sincronización de avisos de cobro.

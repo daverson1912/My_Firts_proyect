@@ -13,3 +13,8 @@ access_res_company_whub,res.company.whub,model_res_company,base.group_user,1,1,1
 access_whub_notice_sync_log,whub.notice.sync.log,model_whub_notice_sync_log,base.group_user,1,1,1,1
 access_whub_notice_sync_log_admin,whub.notice.sync.log.admin,model_whub_notice_sync_log,base.group_system,1,1,1,1
 access_whub_notice_sync_wizard,whub.notice.sync.wizard,model_whub_notice_sync_wizard,base.group_user,1,1,1,1
+access_whub_notice_resolve_wizard,whub.notice.resolve.wizard,model_whub_notice_resolve_wizard,base.group_user,1,1,1,1
+access_whub_notice_resolve_batch_wizard,whub.notice.resolve.batch.wizard,model_whub_notice_resolve_batch_wizard,base.group_user,1,1,1,1
+access_whub_notice_resolve_customer_line,whub.notice.resolve.customer.line,model_whub_notice_resolve_customer_line,base.group_user,1,1,1,1
+access_whub_notice_resolve_product_line,whub.notice.resolve.product.line,model_whub_notice_resolve_product_line,base.group_user,1,1,1,1
+

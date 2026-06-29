@@ -1,6 +1,7 @@
 import json
 import requests
 import logging
+import concurrent.futures
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from odoo.modules.module import get_module_resource
@@ -21,7 +22,7 @@ class WHubLineMixin(models.AbstractModel):
 # ==========================================================================================
 # MODELOS DE LÍNEAS / LINE MODELS
 # ==========================================================================================
-class WHubHomologationCategoryLine(models.TransientModel):
+class WHubHomologationCategoryLine(models.Model):
     _name = 'whub.homologation.category.line'
     _inherit = 'whub.line.mixin'
     _description = 'Línea de Homologación de Categorías'
@@ -29,13 +30,14 @@ class WHubHomologationCategoryLine(models.TransientModel):
     whub_category_name = fields.Char('Categoría WispHub')
     odoo_category_id = fields.Many2one('product.category', string='Categoría Odoo')
 
-class WHubHomologationProductLine(models.TransientModel):
+class WHubHomologationProductLine(models.Model):
     _name = 'whub.homologation.product.line'
     _inherit = 'whub.line.mixin'
     _description = 'Línea de Homologación de Productos'
     wizard_id = fields.Many2one('whub.homologation.wizard', ondelete='cascade')
     whub_product_name = fields.Char('Producto WispHub')
     whub_product_id = fields.Char('ID WispHub')
+    whub_description = fields.Char('Descripción WispHub')
     whub_category_name = fields.Char('Categoría WispHub')
     whub_price = fields.Float('Precio WispHub')
     odoo_product_id = fields.Many2one('product.product', string='Producto Odoo')
@@ -46,7 +48,7 @@ class WHubHomologationProductLine(models.TransientModel):
         for rec in self:
             rec.odoo_product_categ_name = rec.odoo_product_id.categ_id.name if rec.odoo_product_id else ''
 
-class WHubHomologationPlanLine(models.TransientModel):
+class WHubHomologationPlanLine(models.Model):
     _name = 'whub.homologation.plan.line'
     _inherit = 'whub.line.mixin'
     _description = 'Línea de Homologación de Planes'
@@ -64,7 +66,7 @@ class WHubHomologationPlanLine(models.TransientModel):
         for rec in self:
             rec.odoo_product_categ_name = rec.odoo_product_id.categ_id.name if rec.odoo_product_id else ''
 
-class WHubHomologationCustomerLine(models.TransientModel):
+class WHubHomologationCustomerLine(models.Model):
     _name = 'whub.homologation.customer.line'
     _inherit = 'whub.line.mixin'
     _description = 'Línea de Homologación de Clientes'
@@ -73,12 +75,15 @@ class WHubHomologationCustomerLine(models.TransientModel):
     whub_customer_id = fields.Char('ID WispHub')
     whub_fiscal_id = fields.Char('Cédula/RIF')
     whub_person_type = fields.Char('Tipo de Persona')
+    whub_phone = fields.Char('Teléfono WispHub')
+    whub_email = fields.Char('Email WispHub')
+    whub_address = fields.Char('Dirección WispHub')
     odoo_partner_id = fields.Many2one('res.partner', string='Contacto Odoo')
 
 # ==========================================================================================
 # WIZARD PRINCIPAL / MAIN WIZARD
 # ==========================================================================================
-class WHubHomologationWizard(models.TransientModel):
+class WHubHomologationWizard(models.Model):
     _name = 'whub.homologation.wizard'
     _description = 'Asistente de Homologación WispHub'
     _rec_name = 'whub_title'
@@ -103,17 +108,6 @@ class WHubHomologationWizard(models.TransientModel):
     # Indicador de selección activa / Active selection indicator
     has_selection = fields.Boolean(compute='_compute_has_selection', store=False)
     
-    @api.depends('category_line_ids.is_selected', 'product_line_ids.is_selected', 'plan_line_ids.is_selected', 'customer_line_ids.is_selected')
-    def _compute_has_selection(self):
-        """ Calcula si hay algún registro seleccionado en CUALQUIER pestaña """
-        for rec in self:
-            rec.has_selection = any([
-                rec.category_line_ids.filtered('is_selected'),
-                rec.product_line_ids.filtered('is_selected'),
-                rec.plan_line_ids.filtered('is_selected'),
-                rec.customer_line_ids.filtered('is_selected'),
-            ])
-
     @api.depends(
         'active_section',
         'category_line_ids.is_selected',
@@ -184,6 +178,17 @@ class WHubHomologationWizard(models.TransientModel):
         """ Método vacío para botones que funcionan como etiquetas visuales """
         pass
 
+    def _propagate_category_to_products(self, category_lines):
+        """ Reasigna la categoría Odoo homologada a todos los productos/planes de WispHub
+        que pertenezcan a esas categorías y ya estén vinculados a un producto Odoo. """
+        for l in category_lines.filtered('odoo_category_id'):
+            for line_set in (self.product_line_ids, self.plan_line_ids):
+                linked_lines = line_set.filtered(
+                    lambda p: p.whub_category_name == l.whub_category_name and p.odoo_product_id
+                )
+                for p in linked_lines:
+                    p.odoo_product_id.product_tmpl_id.categ_id = l.odoo_category_id.id
+
     def action_apply_batch_link(self):
         """ Aplica el vínculo de la cabecera a todos los registros marcados con el check """
         sec = self.active_section
@@ -208,7 +213,10 @@ class WHubHomologationWizard(models.TransientModel):
             raise UserError("No hay registros seleccionados con el check en la tabla.")
 
         lines.write({o_attr: res_id})
-        
+
+        if sec == 'category':
+            self._propagate_category_to_products(lines)
+
         # Limpiar el campo batch tras aplicar
         self.write({
             'batch_odoo_category_id': False,
@@ -223,77 +231,109 @@ class WHubHomologationWizard(models.TransientModel):
     # ---------------------------------------------------------
 
     def action_load_wisphub_data(self):
-        """ Descarga masiva de datos / Bulk data download """
-        # Configuraciones / Configs
-        url = (self.env.company.whub_middleware_url or '').strip().rstrip('/')
+        """ Inicia la descarga síncrona manual (congela la pantalla del usuario) """
+        self._execute_sync(self.company_id)
+        return self._reopen_self()
+
+    @api.model
+    def action_cron_sync_homologation_data(self):
+        """ Método del Cron Job: sincroniza silenciosamente las homologaciones de todas las compañías con API Key """
+        companies = self.env['res.company'].search([('whub_api_key', '!=', False)])
+        for company in companies:
+            wizard = self.search([('company_id', '=', company.id)], limit=1)
+            if not wizard:
+                wizard = self.create({'company_id': company.id})
+            try:
+                wizard._execute_sync(company)
+            except Exception as e:
+                _logger.error("Error en la sincronización en segundo plano de catálogos para compañía %s: %s", company.name, e)
+
+    def _execute_sync(self, company):
+        """ Lógica interna de sincronización (se ejecuta dentro del hilo) """
+        url = (company.whub_middleware_url or '').strip().rstrip('/')
         if not url:
             raise UserError("No se ha configurado la URL del Middleware en los Ajustes de WispHub.")
-        headers = {'Content-Type': 'application/json'}
-        payload = {"auth": {"api_key": self.env.company.whub_api_key}}
-
-        # Limpiar solo líneas que no estén vinculadas ni seleccionadas para no perder trabajo pendiente
-        for f in ['category_line_ids', 'product_line_ids', 'plan_line_ids']:
-            link_field = 'odoo_category_id' if f == 'category_line_ids' else 'odoo_product_id'
-            self[f].filtered(lambda l: not l[link_field] and not l.is_selected).unlink()
         
-        # Para clientes, limpiar completamente para asegurar sincronización completa
-        self.customer_line_ids.unlink()
+        headers = {'Content-Type': 'application/json'}
+        payload = {"auth": {"api_key": company.whub_api_key}}
 
-        # Obtener IDs actuales para evitar duplicar lo que ya está cargado
+        # Obtener los IDs ya existentes en las tablas del wizard para no duplicar ni eliminar trabajo
         existing_cats = set(self.category_line_ids.mapped('whub_category_name'))
         existing_prods = set(self.product_line_ids.mapped('whub_product_id'))
         existing_plans = set(self.plan_line_ids.mapped('whub_plan_id'))
-        existing_custs = set()  # Vacío para clientes para permitir sincronización completa
+        existing_custs = set(self.customer_line_ids.mapped('whub_customer_id'))
 
-        try:
-            # 1. Artículos y Categorías / Articles and Categories
-            res = requests.post(f"{url}/api/v1/wisphub/articles", json=payload, headers=headers, timeout=60)
-            data = self._extract_data(res)
-            for art in data:
-                c_name = art.get('category', 'Sin Categoría')
-                if c_name not in existing_cats:
-                    name_match = self.env['product.category'].search([('name', '=', c_name)], limit=1)
-                    self.env['whub.homologation.category.line'].create({
-                        'wizard_id': self.id,
-                        'whub_category_name': c_name,
-                        'odoo_category_id': False,
-                        'match_found': bool(name_match)
-                    })
-                    existing_cats.add(c_name)
-                
-                w_id = str(art.get('id', ''))
-                if w_id in existing_prods: continue
-                existing_prods.add(w_id)
-                
-                name = art.get('name')
-                prod_odoo = self._find_odoo_record('product.product', 'whub_product_id', w_id)
-                name_match = self.env['product.product'].search([('name', '=', name)], limit=1) if not prod_odoo else None
-                self.env['whub.homologation.product.line'].create({
+        # 1. Artículos y Categorías (Incremental si aplica)
+        payload_art = dict(payload)
+        if company.whub_sync_prod:
+            payload_art['filters'] = {
+                'updated_at__gte': company.whub_sync_prod.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        
+        res = requests.post(f"{url}/api/v1/wisphub/articles", json=payload_art, headers=headers, timeout=60)
+        data = self._extract_data(res)
+        for art in data:
+            c_name = art.get('category', 'Sin Categoría')
+            if c_name not in existing_cats:
+                name_match = self.env['product.category'].search([('name', '=', c_name)], limit=1)
+                self.env['whub.homologation.category.line'].create({
                     'wizard_id': self.id,
-                    'whub_product_name': name,
-                    'whub_product_id': w_id,
                     'whub_category_name': c_name,
-                    'whub_price': float(art.get('price') or 0.0),
-                    'odoo_product_id': prod_odoo.id if prod_odoo else False,
-                    'match_found': bool(not prod_odoo and name_match)
+                    'odoo_category_id': False,
+                    'match_found': bool(name_match)
                 })
-
-            # 2. Planes e Internet / Planes
-            self._sync_simple(url, "/api/v1/wisphub/plans", 'whub.homologation.plan.line', 'whub_plan_id', 'product.product', payload, headers, extra={'whub_type': 'Internet', 'whub_category_name': 'Planes Internet'}, existing_set=existing_plans, fetch_price=True)
-            self._sync_simple(url, "/api/v1/wisphub/additional-plans", 'whub.homologation.plan.line', 'whub_plan_id', 'product.product', payload, headers, extra={'whub_type': 'Adicional', 'whub_category_name': 'Planes Adicionales'}, existing_set=existing_plans, fetch_price=True)
+                existing_cats.add(c_name)
             
-            # 3. Clientes / Customers
-            self._sync_customers(url, payload, headers, existing_set=existing_custs)
+            w_id = str(art.get('id', ''))
+            desc = art.get('description') or art.get('descripcion') or ''
+            price = float(art.get('price') or 0.0)
+            name = art.get('name')
+            
+            if w_id in existing_prods:
+                existing_line = self.product_line_ids.filtered(lambda l: l.whub_product_id == w_id)
+                if existing_line:
+                    existing_line.write({
+                        'whub_description': desc,
+                        'whub_product_name': name,
+                        'whub_category_name': c_name,
+                        'whub_price': price,
+                    })
+                continue
+            existing_prods.add(w_id)
+            
+            prod_odoo = self._find_odoo_record('product.product', 'whub_product_id', w_id)
+            name_match = self.env['product.product'].search([('name', '=', name), ('whub_product_id', 'in', [False, ''])], limit=1) if not prod_odoo else None
+            self.env['whub.homologation.product.line'].create({
+                'wizard_id': self.id,
+                'whub_product_name': name,
+                'whub_product_id': w_id,
+                'whub_description': desc,
+                'whub_category_name': c_name,
+                'whub_price': price,
+                'odoo_product_id': prod_odoo.id if prod_odoo else False,
+                'match_found': bool(not prod_odoo and name_match)
+            })
 
-        except requests.exceptions.RequestException:
-            raise UserError(
-                "No se pudo conectar con WispHub.\n\n"
-                "Verifique que la aplicación de conexión esté iniciada "
-                "y que su red funcione correctamente."
-            )
-
+        # 2. Planes e Internet (Incremental si aplica)
+        payload_plan = dict(payload)
+        if company.whub_sync_plan:
+            payload_plan['filters'] = {
+                'updated_at__gte': company.whub_sync_plan.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        
+        self._sync_simple(url, "/api/v1/wisphub/plans", 'whub.homologation.plan.line', 'whub_plan_id', 'product.product', payload_plan, headers, extra={'whub_type': 'Internet', 'whub_category_name': 'Planes Internet'}, existing_set=existing_plans, fetch_price=True)
+        self._sync_simple(url, "/api/v1/wisphub/additional-plans", 'whub.homologation.plan.line', 'whub_plan_id', 'product.product', payload_plan, headers, extra={'whub_type': 'Adicional', 'whub_category_name': 'Planes Adicionales'}, existing_set=existing_plans, fetch_price=True)
+        
+        # 3. Clientes (Incremental si aplica)
+        payload_cust = dict(payload)
+        if company.whub_sync_cust:
+            payload_cust['filters'] = {
+                'updated_at__gte': company.whub_sync_cust.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        self._sync_customers(url, payload_cust, headers, existing_set=existing_custs)
+        
+        # Actualizar fechas de sincronización
         self._update_sync_dates('all')
-        return self._reopen_self()
 
     def _update_sync_dates(self, section='all'):
         """ Actualiza las fechas de sincronización en res.company """
@@ -339,19 +379,33 @@ class WHubHomologationWizard(models.TransientModel):
         res = requests.post(f"{url}{route}", json=payload, headers=headers)
         if res.status_code not in [200, 201]: return
         data = self._extract_data(res)
-        for d in data:
+
+        new_records = [d for d in data if str(d.get('id', '')) not in existing_set]
+
+        # Obtener precios en paralelo para evitar una petición secuencial por cada plan
+        prices_by_id = {}
+        if fetch_price and new_records:
+            ids_to_fetch = [str(d.get('id', '')) for d in new_records]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                futures = {
+                    executor.submit(self._get_plan_price, url, w_id, payload, headers): w_id
+                    for w_id in ids_to_fetch
+                }
+                for future in concurrent.futures.as_completed(futures):
+                    prices_by_id[futures[future]] = future.result()
+
+        for d in new_records:
             w_id = str(d.get('id', ''))
-            if w_id in existing_set: continue
             existing_set.add(w_id)
-            
+
             name = d.get('name', '')
             # Solo vincula si ya tiene el ID de WispHub registrado (homologación previa).
             odoo_rec = self._find_odoo_record(odoo_model, 'whub_product_id', w_id)
-            name_match = self.env[odoo_model].search([('name', '=', name)], limit=1) if not odoo_rec else None
-            
-            # Obtener precio: del listado original o llamando al endpoint de detalle
+            name_match = self.env[odoo_model].search([('name', '=', name), ('whub_product_id', 'in', [False, ''])], limit=1) if not odoo_rec else None
+
+            # Obtener precio: del listado original o del resultado paralelo del endpoint de detalle
             if fetch_price:
-                price = self._get_plan_price(url, w_id, payload, headers)
+                price = prices_by_id.get(w_id, 0.0)
             else:
                 price = float(d.get('price') or 0.0)
             
@@ -412,7 +466,8 @@ class WHubHomologationWizard(models.TransientModel):
             
             page_added = 0
             page_skipped = 0
-            
+            page_refreshed = 0
+
             for c in data:
                 # WispHub usa el username/user como identificador en los Avisos de Cobro (Invoices),
                 # por lo que debemos priorizarlo sobre el ID numérico interno para que la homologación funcione.
@@ -421,29 +476,43 @@ class WHubHomologationWizard(models.TransientModel):
                     page_skipped += 1
                     _logger.warning(f"Skipping customer with no username/user/id: {c}")
                     continue
+
+                name = c.get('full_name') or c.get('name') or c.get('username')
+                contact = c.get('contact') or {}
+                line_vals = {
+                    'whub_customer_name': name,
+                    'whub_fiscal_id': c.get('fiscal_id'),
+                    'whub_person_type': c.get('person_type'),
+                    'whub_phone': contact.get('phone'),
+                    'whub_email': contact.get('email'),
+                    'whub_address': c.get('address'),
+                }
+
                 if w_id in existing_set:
-                    page_skipped += 1
-                    _logger.warning(f"Skipping duplicate customer: {w_id}")
+                    # Ya existe en este wizard: refrescar sus datos (tel/email/etc. pueden
+                    # haber estado vacíos en una sincronización anterior). No se toca el
+                    # vínculo de homologación (odoo_partner_id) que ya tenga.
+                    existing_line = self.customer_line_ids.filtered(lambda l: l.whub_customer_id == w_id)
+                    if existing_line:
+                        existing_line.write(line_vals)
+                        page_refreshed += 1
                     continue
                 existing_set.add(w_id)
 
-                name = c.get('full_name') or c.get('name') or c.get('username')
                 c_odoo = self._find_odoo_record('res.partner', 'whub_customer_id', w_id)
-                name_match = self.env['res.partner'].search([('name', '=', name)], limit=1) if not c_odoo else None
-                self.env['whub.homologation.customer.line'].create({
+                name_match = self.env['res.partner'].search([('name', '=', name), ('whub_customer_id', 'in', [False, ''])], limit=1) if not c_odoo else None
+                line_vals.update({
                     'wizard_id': self.id,
                     'whub_customer_id': w_id,
-                    'whub_fiscal_id': c.get('fiscal_id'),
-                    'whub_customer_name': name,
-                    'whub_person_type': c.get('person_type'),
                     'odoo_partner_id': c_odoo.id if c_odoo else False,
                     'match_found': bool(not c_odoo and name_match)
                 })
+                self.env['whub.homologation.customer.line'].create(line_vals)
                 page_added += 1
             
             total_customers_added += page_added
             total_customers_skipped += page_skipped
-            _logger.info(f"Page {page_count} processed: {page_added} added, {page_skipped} skipped")
+            _logger.info(f"Page {page_count} processed: {page_added} added, {page_refreshed} refreshed, {page_skipped} skipped")
 
             # Si recibimos menos registros que el page_size, terminamos
             if len(data) < page_size:
@@ -481,14 +550,15 @@ class WHubHomologationWizard(models.TransientModel):
 
     def action_apply_mapping(self):
         """ Guarda los cambios en Odoo / Saves changes to Odoo """
-        for l in self.category_line_ids.filtered('odoo_category_id'): l.odoo_category_id.name = l.whub_category_name
-        for l in self.product_line_ids.filtered('odoo_product_id'): 
+        self._propagate_category_to_products(self.category_line_ids)
+        for l in self.product_line_ids.filtered('odoo_product_id'):
             self._append_whub_id(l.odoo_product_id.product_tmpl_id, 'whub_product_id', l.whub_product_id)
         for l in self.plan_line_ids.filtered('odoo_product_id'): 
             self._append_whub_id(l.odoo_product_id.product_tmpl_id, 'whub_product_id', l.whub_plan_id)
             l.odoo_product_id.type = 'service'
-        for l in self.customer_line_ids.filtered('odoo_partner_id'): 
+        for l in self.customer_line_ids.filtered('odoo_partner_id'):
             self._append_whub_id(l.odoo_partner_id, 'whub_customer_id', l.whub_customer_id)
+            self._fill_missing_partner_data(l.odoo_partner_id, l.whub_fiscal_id, l.whub_phone, l.whub_email, l.whub_address)
             mapped_type = self._map_whub_person_type(l.whub_person_type)
             if mapped_type:
                 l.odoo_partner_id.write({
@@ -501,6 +571,9 @@ class WHubHomologationWizard(models.TransientModel):
         suffix = 'cat' if self.active_section == 'category' else self.active_section[:4]
         vals = {'whub_sync_date': now, f'whub_sync_{suffix}': now}
         self.env.company.write(vals)
+
+        # Reprocesar logs automáticamente tras homologar
+        self.env['whub.notice.sync.log']._auto_reprocess_failed_logs(self.company_id.id)
         
         return {
             'type': 'ir.actions.client',
@@ -526,7 +599,14 @@ class WHubHomologationWizard(models.TransientModel):
         for l in lines:
             name = l.whub_category_name if sec == 'category' else l.whub_product_name if sec == 'product' else l.whub_plan_name if sec == 'plan' else l.whub_customer_name
             w_id = l.whub_category_name if sec == 'category' else l.whub_product_id if sec == 'product' else l.whub_plan_id if sec == 'plan' else l.whub_customer_id
-            batch_vals.append((0, 0, {'res_type': sec, 'name': name, 'whub_id': w_id, 'source_line_id': f"{sec[:4]}_{l.id}"}))
+            desc = l.whub_description if sec == 'product' else ''
+            batch_vals.append((0, 0, {
+                'res_type': sec,
+                'name': name,
+                'whub_id': w_id,
+                'whub_description': desc,
+                'source_line_id': f"{sec[:4]}_{l.id}"
+            }))
         
         new_wiz = self.env['whub.homologation.batch.wizard'].create({'parent_wizard_id': self.id, 'res_type': sec, 'line_ids': batch_vals})
         return {'name': 'Relacionar Registros', 'type': 'ir.actions.act_window', 'res_model': 'whub.homologation.batch.wizard', 'res_id': new_wiz.id, 'view_mode': 'form', 'target': 'new'}
@@ -544,7 +624,14 @@ class WHubHomologationWizard(models.TransientModel):
         for l in lines:
             name = l.whub_category_name if sec == 'category' else l.whub_product_name if sec == 'product' else l.whub_plan_name if sec == 'plan' else l.whub_customer_name
             w_id = l.whub_category_name if sec == 'category' else l.whub_product_id if sec == 'product' else l.whub_plan_id if sec == 'plan' else l.whub_customer_id
-            batch_vals.append((0, 0, {'res_type': sec, 'name': name, 'whub_id': w_id, 'source_line_id': f"{sec[:4]}_{l.id}"}))
+            desc = l.whub_description if sec == 'product' else ''
+            batch_vals.append((0, 0, {
+                'res_type': sec,
+                'name': name,
+                'whub_id': w_id,
+                'whub_description': desc,
+                'source_line_id': f"{sec[:4]}_{l.id}"
+            }))
         
         new_wiz = self.env['whub.creation.selection.wizard'].create({'parent_wizard_id': self.id, 'line_ids': batch_vals})
         return {'name': 'Creación Individual', 'type': 'ir.actions.act_window', 'res_model': 'whub.creation.selection.wizard', 'res_id': new_wiz.id, 'view_mode': 'form', 'target': 'new'}
@@ -614,6 +701,23 @@ class WHubHomologationWizard(models.TransientModel):
             current.append(new_id)
             record.write({field: ','.join(current)})
 
+    def _fill_missing_partner_data(self, partner, fiscal_id=None, phone=None, email=None, address=None):
+        """ Completa solo los campos vacíos del contacto con los datos de WispHub,
+        sin sobrescribir información que el contacto ya tenga en Odoo. """
+        if not partner:
+            return
+        vals = {}
+        if fiscal_id and not partner.vat:
+            vals['vat'] = fiscal_id
+        if phone and not partner.phone:
+            vals['phone'] = phone
+        if email and not partner.email:
+            vals['email'] = email
+        if address and not partner.street:
+            vals['street'] = address
+        if vals:
+            partner.write(vals)
+
     def _find_odoo_record(self, model, field, search_id):
         """Busca un registro por ID dentro de una lista separada por comas."""
         domain = ['|', (field, '=', search_id),
@@ -635,12 +739,14 @@ class WHubHomologationBatchWizard(models.TransientModel):
 
     def action_confirm_batch_homologation(self):
         """ Aplica los registros seleccionados individualmente en el popup a las tablas base """
+        homologated_category_lines = self.env['whub.homologation.category.line']
         for l in self.line_ids:
             tp, sid = l.source_line_id.split('_')
             obj = self.env[f'whub.homologation.{l.res_type}.line'].browse(int(sid))
-            
+
             if l.res_type == 'category' and l.odoo_category_id:
                 obj.odoo_category_id = l.odoo_category_id.id
+                homologated_category_lines |= obj
             elif l.res_type == 'product' and l.odoo_product_id:
                 obj.odoo_product_id = l.odoo_product_id.id
                 self.parent_wizard_id._append_whub_id(l.odoo_product_id.product_tmpl_id, 'whub_product_id', obj.whub_product_id)
@@ -651,8 +757,18 @@ class WHubHomologationBatchWizard(models.TransientModel):
             elif l.res_type == 'customer' and l.odoo_partner_id:
                 obj.odoo_partner_id = l.odoo_partner_id.id
                 self.parent_wizard_id._append_whub_id(l.odoo_partner_id, 'whub_customer_id', obj.whub_customer_id)
+                self.parent_wizard_id._fill_missing_partner_data(
+                    l.odoo_partner_id, obj.whub_fiscal_id, obj.whub_phone, obj.whub_email, obj.whub_address
+                )
+
+        if homologated_category_lines:
+            self.parent_wizard_id._propagate_category_to_products(homologated_category_lines)
 
         self.parent_wizard_id._update_sync_dates(self.res_type)
+
+        # Reprocesar logs automáticamente tras homologar
+        self.env['whub.notice.sync.log']._auto_reprocess_failed_logs(self.parent_wizard_id.company_id.id)
+
         return self.parent_wizard_id._reopen_self()
 
 class WHubHomologationBatchLine(models.TransientModel):
@@ -661,6 +777,7 @@ class WHubHomologationBatchLine(models.TransientModel):
     res_type = fields.Selection([('category', 'Categoría'), ('product', 'Producto'), ('plan', 'Plan'), ('customer', 'Cliente')])
     name = fields.Char('Nombre')
     whub_id = fields.Char('ID WH')
+    whub_description = fields.Char('Descripción WispHub')
     source_line_id = fields.Char('Ref')
     
     # Selectores individuales con filtros de dominio
@@ -675,6 +792,23 @@ class WHubCreationSelectionWizard(models.TransientModel):
     _description = 'Selector de Creación'
     parent_wizard_id = fields.Many2one('whub.homologation.wizard')
     line_ids = fields.One2many('whub.creation.selection.line', 'wizard_id')
+    has_product_lines = fields.Boolean(compute='_compute_has_product_lines')
+
+    @api.depends('line_ids.res_type')
+    def _compute_has_product_lines(self):
+        for rec in self:
+            rec.has_product_lines = bool(rec.line_ids.filtered(lambda l: l.res_type == 'product'))
+
+    def _resolve_category(self, whub_category_name):
+        """ Devuelve la categoría Odoo homologada para esta categoría de WispHub.
+        Si no hay homologación, busca/crea una categoría con el nombre de WispHub. """
+        homolog_line = self.parent_wizard_id.category_line_ids.filtered(
+            lambda c: c.whub_category_name == whub_category_name and c.odoo_category_id
+        )
+        if homolog_line:
+            return homolog_line[0].odoo_category_id
+        return self.env['product.category'].search([('name', '=', whub_category_name)], limit=1) \
+            or self.env['product.category'].create({'name': whub_category_name})
 
     def action_confirm_creation(self):
         """ Ejecuta creación masiva con reporte detallado """
@@ -698,20 +832,29 @@ class WHubCreationSelectionWizard(models.TransientModel):
             
             elif tp == 'prod':
                 if not obj.odoo_product_id:
+                    # Calcular el nombre final según la opción elegida
+                    final_name = obj.whub_product_name
+                    if l.creation_name_option == 'name_desc':
+                        if l.whub_description:
+                            final_name = f"{obj.whub_product_name} - {l.whub_description}"
+                    elif l.creation_name_option == 'desc':
+                        if l.whub_description:
+                            final_name = l.whub_description
+                    
                     # 1. Búsqueda por ID (Prioridad)
                     exist = self.env['product.product'].search([('whub_product_id', '=', obj.whub_product_id)], limit=1)
                     # 2. Búsqueda por Nombre (Fallback para evitar duplicados si ya existe sin ID)
                     if not exist:
-                        exist = self.env['product.product'].search([('name', '=', obj.whub_product_name)], limit=1)
+                        exist = self.env['product.product'].search([('name', '=', final_name), ('whub_product_id', 'in', [False, ''])], limit=1)
                     
                     if exist:
                         obj.odoo_product_id = exist.id
                         self.parent_wizard_id._append_whub_id(exist.product_tmpl_id, 'whub_product_id', obj.whub_product_id)
                         was_linked = True
                     else:
-                        cat = self.env['product.category'].search([('name', '=', obj.whub_category_name)], limit=1) or self.env['product.category'].create({'name': obj.whub_category_name})
+                        cat = self._resolve_category(obj.whub_category_name)
                         obj.odoo_product_id = self.env['product.product'].create({
-                            'name': obj.whub_product_name,
+                            'name': final_name,
                             'type': 'consu',
                             'categ_id': cat.id,
                             'lst_price': obj.whub_price,
@@ -727,14 +870,14 @@ class WHubCreationSelectionWizard(models.TransientModel):
                     exist = self.env['product.product'].search([('whub_product_id', '=', obj.whub_plan_id)], limit=1)
                     # 2. Búsqueda por Nombre
                     if not exist:
-                        exist = self.env['product.product'].search([('name', '=', obj.whub_plan_name)], limit=1)
+                        exist = self.env['product.product'].search([('name', '=', obj.whub_plan_name), ('whub_product_id', 'in', [False, ''])], limit=1)
                     
                     if exist:
                         obj.odoo_product_id = exist.id
                         self.parent_wizard_id._append_whub_id(exist.product_tmpl_id, 'whub_product_id', obj.whub_plan_id)
                         was_linked = True
                     else:
-                        cat = self.env['product.category'].search([('name', '=', obj.whub_category_name)], limit=1) or self.env['product.category'].create({'name': obj.whub_category_name})
+                        cat = self._resolve_category(obj.whub_category_name)
                         obj.odoo_product_id = self.env['product.product'].create({
                             'name': obj.whub_plan_name,
                             'type': 'service',
@@ -753,7 +896,7 @@ class WHubCreationSelectionWizard(models.TransientModel):
                     exist = self.env['res.partner'].search([('whub_customer_id', '=', obj.whub_customer_id)], limit=1)
                     # 2. Búsqueda por Nombre
                     if not exist:
-                        exist = self.env['res.partner'].search([('name', '=', obj.whub_customer_name)], limit=1)
+                        exist = self.env['res.partner'].search([('name', '=', obj.whub_customer_name), ('whub_customer_id', 'in', [False, ''])], limit=1)
                     # 3. Búsqueda por RIF/Cédula (para evitar duplicación e impedir fallo de restricción única)
                     if not exist and obj.whub_fiscal_id:
                         normalized_vat = self.env['res.partner']._normalize_vat(obj.whub_fiscal_id)
@@ -767,6 +910,9 @@ class WHubCreationSelectionWizard(models.TransientModel):
                     if exist:
                         obj.odoo_partner_id = exist.id
                         self.parent_wizard_id._append_whub_id(exist, 'whub_customer_id', obj.whub_customer_id)
+                        self.parent_wizard_id._fill_missing_partner_data(
+                            exist, obj.whub_fiscal_id, obj.whub_phone, obj.whub_email, obj.whub_address
+                        )
                         if mapped_type:
                             exist.write({
                                 'company_type': mapped_type,
@@ -777,6 +923,9 @@ class WHubCreationSelectionWizard(models.TransientModel):
                         obj.odoo_partner_id = self.env['res.partner'].create({
                             'name': obj.whub_customer_name,
                             'vat': obj.whub_fiscal_id,
+                            'phone': obj.whub_phone,
+                            'email': obj.whub_email,
+                            'street': obj.whub_address,
                             'whub_customer_id': obj.whub_customer_id,
                             'company_type': mapped_type or 'person',
                             'is_company': False if mapped_type == 'person' else True
@@ -795,6 +944,9 @@ class WHubCreationSelectionWizard(models.TransientModel):
         # Actualizar fecha de la sección procesada
         sec = self.line_ids[0].res_type if self.line_ids else 'all'
         self.parent_wizard_id._update_sync_dates(sec)
+
+        # Reprocesar logs automáticamente tras homologar
+        self.env['whub.notice.sync.log']._auto_reprocess_failed_logs(self.parent_wizard_id.company_id.id)
 
         return {
             'type': 'ir.actions.client',
@@ -822,3 +974,9 @@ class WHubCreationSelectionLine(models.TransientModel):
     is_selected = fields.Boolean('Crear', default=True)
     res_type = fields.Selection([('category', 'Categoría'), ('product', 'Producto'), ('plan', 'Plan'), ('customer', 'Cliente')])
     name, whub_id, source_line_id = fields.Char('Nombre'), fields.Char('ID WH'), fields.Char('Ref')
+    whub_description = fields.Char('Descripción WispHub')
+    creation_name_option = fields.Selection([
+        ('name', 'Solo Nombre'),
+        ('name_desc', 'Nombre + Descripción'),
+        ('desc', 'Solo Descripción')
+    ], string='Formato Nombre', default='name', required=True)

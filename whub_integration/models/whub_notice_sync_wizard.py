@@ -1,38 +1,25 @@
-from odoo import fields, models, api
+from datetime import datetime
+
+from odoo import fields, models
 
 
 class WHubNoticeSyncWizard(models.TransientModel):
     """
-    Wizard para consulta de avisos de cobro por rango de fechas.
-    Permite sincronizar avisos de WispHub en un periodo específico.
+    Mini wizard para sincronizar avisos de cobro desde un punto de inicio elegido
+    por el usuario. A partir de ese punto, trae todas las órdenes hasta ahora y deja
+    ese punto guardado para que el cron continúe automáticamente cada 20 minutos.
     """
     _name = 'whub.notice.sync.wizard'
-    _description = 'Wizard de Consulta de Avisos por Fechas'
+    _description = 'Wizard de Sincronización de Avisos de Cobro'
 
-    date_from = fields.Date(string='Fecha Desde', required=True, default=fields.Date.context_today)
-    date_to = fields.Date(string='Fecha Hasta', required=True, default=fields.Date.context_today)
-    days_back = fields.Integer(string='Días de Búsqueda de Avisos', default=lambda self: self.env.company.whub_notice_sync_days_back or 30)
+    date_from = fields.Date(
+        string='Punto de Inicio',
+        required=True,
+        default=lambda self: (self.env.company.whub_sync_inv or fields.Datetime.now()).date()
+    )
 
-    def action_sync_by_dates(self):
-        """
-        Ejecuta la sincronización de avisos usando el rango de fechas seleccionado.
-        """
+    def action_sync_from_date(self):
+        """ Ejecuta la sincronización desde el punto de inicio elegido (00:00) hasta ahora. """
         self.ensure_one()
-        sync_engine = self.env['whub.notice.sync.engine']
-        
-        # Validar que fecha_from no sea mayor a fecha_to
-        if self.date_from > self.date_to:
-            raise models.UserError('La fecha Desde no puede ser mayor a la fecha Hasta.')
-        
-        # Guardar los días de búsqueda atrás en la compañía
-        self.env.company.sudo().write({
-            'whub_notice_sync_days_back': self.days_back
-        })
-        
-        # Llamar al método de sincronización con fechas personalizadas
-        result = sync_engine.action_sync_payment_notices_by_dates(
-            date_from=self.date_from,
-            date_to=self.date_to
-        )
-        
-        return result
+        date_from_dt = datetime.combine(self.date_from, datetime.min.time())
+        return self.env['whub.notice.sync.engine'].action_sync_payment_notices_from(date_from_dt)

@@ -130,8 +130,8 @@ class ResPartner(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if 'vat' in vals and vals['vat']:
-                vals['vat'] = self._normalize_vat(vals['vat'])
-                # Autodetectar tipo de persona (individual o jurídica)
+                # No se sobrescribe el formato del RIF/Cédula: se respeta tal cual llega
+                # (con o sin guiones, según lo envíe la fuente de datos).
                 is_company = self._determine_is_company_from_vat(vals['vat'])
                 if is_company is not None and 'is_company' not in vals:
                     vals['is_company'] = is_company
@@ -141,8 +141,7 @@ class ResPartner(models.Model):
 
     def write(self, vals):
         if 'vat' in vals and vals['vat']:
-            vals['vat'] = self._normalize_vat(vals['vat'])
-            # Autodetectar tipo de persona (individual o jurídica)
+            # No se sobrescribe el formato del RIF/Cédula: se respeta tal cual llega.
             is_company = self._determine_is_company_from_vat(vals['vat'])
             if is_company is not None and 'is_company' not in vals:
                 vals['is_company'] = is_company

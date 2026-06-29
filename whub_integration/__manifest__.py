@@ -14,7 +14,7 @@
         - Avisos de Cobro → Órdenes de Venta / Payment Notices → Sales Orders
         - Log de sincronización con re-procesamiento / Sync log with reprocessing
     """,
-    'depends': ['base', 'product', 'sale', 'contacts', 'account', 'payment'],
+    'depends': ['base', 'product', 'sale', 'sale_loyalty', 'contacts', 'account', 'payment'],
     'data': [
         'security/ir.model.access.csv',
         'data/ir_cron_data.xml',

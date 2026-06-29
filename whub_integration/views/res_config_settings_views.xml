@@ -82,8 +82,6 @@
                                 <div class="d-flex flex-column gap-2" style="max-width: 340px;" invisible="not whub_step_2_ok">
                                     <button name="action_sync_payment_notices" string="Sincronizar Avisos de Cobro"
                                             type="object" class="btn btn-primary w-100 text-start" icon="fa-money"/>
-                                    <button name="action_open_sync_date_wizard" string="Consultar Avisos por Fechas"
-                                            type="object" class="btn btn-outline-secondary w-100 text-start" icon="fa-calendar"/>
                                     <button name="action_open_sync_log" string="Ver Log de Sincronización"
                                             type="object" class="btn btn-outline-secondary w-100 text-start" icon="fa-history"/>
                                 </div>

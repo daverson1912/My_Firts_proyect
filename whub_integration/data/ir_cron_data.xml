@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <!-- Acción planificada para sincronizar avisos de cobro cada hora -->
+        <!-- Continúa automáticamente desde la fecha/hora de la última orden sincronizada (whub_sync_inv) -->
         <record id="ir_cron_whub_sync_payment_notices" model="ir.cron">
             <field name="name">WispHub: Sincronizar Avisos de Cobro</field>
             <field name="model_id" ref="model_whub_notice_sync_engine"/>
             <field name="state">code</field>
             <field name="code">model.action_sync_payment_notices()</field>
-            <field name="interval_number">15</field>
+            <field name="interval_number">20</field>
             <field name="interval_type">minutes</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Sincronización automática de Catálogos (Categorías, Productos, Planes, Clientes) para Homologación -->
+        <record id="ir_cron_whub_sync_catalog_data" model="ir.cron">
+            <field name="name">WispHub: Sincronizar Catálogos para Homologación</field>
+            <field name="model_id" ref="model_whub_homologation_wizard"/>
+            <field name="state">code</field>
+            <field name="code">model.action_cron_sync_homologation_data()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
             <field name="active" eval="True"/>
         </record>
     </data>

@@ -15,7 +15,6 @@ class ResConfigSettings(models.TransientModel):
     whub_api_key = fields.Char(string='WHub API Key', help="Token de WispHub")
     whub_middleware_url = fields.Char(related='company_id.whub_middleware_url', readonly=False, string='URL del Middleware')
     whub_allowed_notice_statuses = fields.Char(related='company_id.whub_allowed_notice_statuses', readonly=False, string='Estados de Avisos Permitidos')
-    whub_notice_sync_days_back = fields.Integer(related='company_id.whub_notice_sync_days_back', readonly=False, string='Días de Búsqueda de Avisos')
     whub_customers_page_size = fields.Integer(related='company_id.whub_customers_page_size', readonly=False, string='Tamaño de Página Clientes')
     whub_customers_max_pages = fields.Integer(related='company_id.whub_customers_max_pages', readonly=False, string='Páginas Máximas Clientes')
 
@@ -80,10 +79,9 @@ class ResConfigSettings(models.TransientModel):
         try:
             _logger.info(f"Probando conexión WHub en: {url}")
             headers = {'Content-Type': 'application/json'}
-            payload = {"auth": {"api_key": self.whub_api_key}}
-            # Usamos un timeout más corto (5s) para que no 'cuelgue' la interfaz
+            payload = {"auth": {"api_key": self.whub_api_key}, "filters": {}}
             response = requests.post(f"{url}/api/v1/wisphub/articles", json=payload, headers=headers, timeout=5)
-            
+
             try:
                 data = response.json()
             except Exception:
@@ -103,50 +101,55 @@ class ResConfigSettings(models.TransientModel):
                     }
                 else:
                     raise UserError("La API Key es incorrecta. Por favor, verifíquela en su panel de WispHub.")
-            
+
             elif response.status_code in (401, 403):
                 raise UserError("Credenciales inválidas: La API Key no es correcta o no tiene permisos suficientes.")
-            
+
             else:
-                raise UserError("No se pudo establecer conexión. Verifique que el Middleware esté encendido y que la URL sea correcta.")
-        except Exception:
-            raise UserError("Ocurrió un error inesperado al intentar conectar con WispHub. Verifique su red.")
+                msg = data.get('message') or "Error de comunicación con el Middleware."
+                raise UserError(f"No se pudo establecer conexión (HTTP {response.status_code}): {msg}")
+        except UserError:
+            raise
+        except requests.exceptions.RequestException as re:
+            _logger.warning(f"Error de red en test_connection WispHub: {re}")
+            raise UserError("No se pudo establecer conexión con WispHub. Verifique su red.")
+        except Exception as e:
+            _logger.error(f"Error inesperado en test_connection WispHub: {e}")
+            raise UserError(f"Ocurrió un error inesperado al intentar conectar con WispHub: {str(e)}")
 
     def action_open_homologation_wizard(self):
-        # Intentar buscar un asistente existente reciente para este usuario y compañía
-        # Los TransientModels duran aprox 1 hora en la base de datos hasta que el cron los limpia.
+        # Buscar el asistente persistente único para la compañía activa
         existing_wizard = self.env['whub.homologation.wizard'].search([
-            ('create_uid', '=', self.env.uid),
             ('company_id', '=', self.env.company.id)
-        ], limit=1, order='id desc')
+        ], limit=1)
+        if not existing_wizard:
+            existing_wizard = self.env['whub.homologation.wizard'].create({
+                'company_id': self.env.company.id
+            })
 
         return {
             'name': 'Homologación WispHub',
             'type': 'ir.actions.act_window',
             'res_model': 'whub.homologation.wizard',
-            'res_id': existing_wizard.id if existing_wizard else False,
+            'res_id': existing_wizard.id,
             'view_mode': 'form',
             'target': 'current',
         }
 
 
     def action_sync_payment_notices(self):
-        """Ejecuta la sincronización de avisos de cobro desde la pantalla de Ajustes."""
-        return self.env['whub.notice.sync.engine'].action_sync_payment_notices()
-
-    def action_open_sync_log(self):
-        """Abre la vista del Log de Sincronización de Avisos."""
-        return self.env.ref('whub_integration.action_whub_notice_sync_log').read()[0]
-
-    def action_open_sync_date_wizard(self):
-        """Abre el wizard para consultar avisos por rango de fechas."""
+        """Abre el mini wizard para elegir el punto de partida y sincronizar avisos de cobro."""
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Consultar Avisos por Fechas',
+            'name': 'Sincronizar Avisos de Cobro',
             'res_model': 'whub.notice.sync.wizard',
             'view_mode': 'form',
             'target': 'new',
         }
+
+    def action_open_sync_log(self):
+        """Abre la vista del Log de Sincronización de Avisos."""
+        return self.env.ref('whub_integration.action_whub_notice_sync_log').read()[0]
 
     def action_open_api_config(self):
         return {
@@ -177,14 +180,17 @@ class WHubConfigWizard(models.TransientModel):
             raise UserError("Error: Middleware URL no encontrada.")
 
         headers = {'Content-Type': 'application/json'}
-        payload = {"auth": {"api_key": self.api_key}}
+        payload = {"auth": {"api_key": self.api_key}, "filters": {}}
         try:
             _logger.info(f"Validando API Key en: {url} (Wizard)")
             resp = requests.post(f"{url}/api/v1/wisphub/articles", json=payload, headers=headers, timeout=5)
-            data = resp.json() if resp.status_code in (200, 201) else {}
-            
+
+            try:
+                data = resp.json()
+            except Exception:
+                data = {}
+
             if resp.status_code in (200, 201) and data.get('error', 0) == 0:
-                # ÉXITO: GUARDAR AUTOMÁTICAMENTE
                 self.env.company.whub_api_key = self.api_key
                 return {
                     'type': 'ir.actions.client',
@@ -194,17 +200,20 @@ class WHubConfigWizard(models.TransientModel):
                         'message': '¡Conexión validada y clave guardada correctamente!',
                         'type': 'success',
                         'sticky': False,
-                        # No cerramos para que el usuario vea el éxito, o podemos cerrar
+                        'next': {'type': 'ir.actions.act_window_close'}
                     }
                 }
             else:
-                msg = data.get('message', 'Error de credenciales')
-                raise UserError(f"Fallo: {msg}")
-        except requests.exceptions.RequestException:
+                msg = data.get('message') or data.get('error_desc') or 'Error de credenciales o de comunicación.'
+                raise UserError(f"Fallo de validación (HTTP {resp.status_code}): {msg}")
+        except UserError:
+            raise
+        except requests.exceptions.RequestException as re:
+            _logger.warning(f"Error de red en validación WispHub (Wizard): {re}")
             raise UserError(
-                "No se pudo establecer conexión con WispHub.\n\n"
-                "Por favor, verifique que su conexión a internet esté funcionando correctamente "
-                "y que no haya bloqueos de red que impidan la comunicación."
+                "No se pudo establecer conexión con el Middleware WispHub.\n\n"
+                "Por favor, verifique que la URL sea accesible y que el servicio de Middleware esté iniciado."
             )
-        except Exception:
-            raise UserError("Ocurrió un error inesperado. Por favor, intente de nuevo.")
+        except Exception as e:
+            _logger.error(f"Error inesperado en validación WispHub (Wizard): {e}")
+            raise UserError(f"Ocurrió un error inesperado al intentar conectar: {str(e)}")
